@@ -130,8 +130,8 @@ body::after {
 .hud-sub { font-size:9px; color:#444; letter-spacing:2px; }
 .hud-name { font-size:17px; letter-spacing:2px; line-height:1; }
 .hud-hearts { font-size:18px; letter-spacing:1px; margin-top:2px; }
-.hud-mm { background:rgba(0,0,0,.8); border:1px solid #2a2a2a; padding:4px; border-radius:3px; }
-#minimap { display:block; image-rendering:pixelated; }
+.hud-mm { background:#111; border:2px solid #555; padding:2px; border-radius:3px; width:128px; height:110px; overflow:hidden; flex-shrink:0; }
+#minimap { display:block; image-rendering:pixelated; width:128px; height:110px; }
 
 #room-lbl { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); font-size:15px; color:#666; letter-spacing:3px; pointer-events:none; z-index:50; opacity:0; transition:opacity .5s; white-space:nowrap; text-shadow:0 0 8px #000; }
 #room-lbl.on { opacity:1; }
@@ -199,18 +199,18 @@ body::after {
 /* ACTION BUTTONS — bottom-right */
 #abtn-wrap {
   position:absolute;
-  bottom:32px; right:16px;
+  bottom:24px; right:12px;
   display:flex; flex-direction:column;
-  align-items:flex-end; gap:12px;
+  align-items:flex-end; gap:8px;
   pointer-events:all;
 }
 .abtn {
-  width:70px; height:70px;
+  width:62px; height:62px;
   border-radius:50%;
   border:2px solid rgba(255,255,255,.22);
   background:rgba(0,0,0,.35);
   color:rgba(255,255,255,.8);
-  font-family:'VT323',monospace; font-size:15px; letter-spacing:1px;
+  font-family:'VT323',monospace; font-size:13px; letter-spacing:1px;
   touch-action:none; -webkit-user-select:none; user-select:none;
   display:flex; align-items:center; justify-content:center;
   flex-direction:column; gap:1px;
@@ -221,13 +221,13 @@ body::after {
 .abtn-a {
   border-color:rgba(192,57,43,.55);
   background:rgba(192,57,43,.2);
-  width:76px; height:76px;
+  width:68px; height:68px;
 }
 .abtn-m {
   border-color:rgba(100,160,200,.4);
   background:rgba(40,80,120,.2);
-  width:56px; height:56px;
-  font-size:12px;
+  width:52px; height:52px;
+  font-size:11px;
 }
 /* Menu button stays visible even when controls fade */
 #btn-menu {
@@ -307,6 +307,15 @@ body::after {
 }
 .dlg-choice.investigate { color:#3a5a4a; border-color:#1a2a22; }
 .dlg-choice.goto-choice { color:#666; border-color:#1e1e1e; }
+.inv-unequip-btn {
+  position:absolute; right:36px; top:50%; transform:translateY(-50%);
+  background:rgba(231,76,60,.15); border:1px solid #e74c3c;
+  color:#e74c3c; font-size:14px; width:22px; height:22px;
+  line-height:20px; text-align:center; cursor:pointer;
+  border-radius:2px; padding:0;
+}
+.inv-unequip-btn:active { background:rgba(231,76,60,.4); }
+.inv-slot { position:relative; }
 .dlg-tap-hint {
   color: rgba(200,134,10,.35);
   font-size: 11px;
@@ -366,6 +375,24 @@ body::after {
   font-size:18px; color:#f1c40f; letter-spacing:2px;
   text-shadow:0 0 8px #f1c40f88;
 }
+.shop-tabs { display:flex; border-bottom:1px solid #222; margin-bottom:0; }
+.shop-tab { flex:1; background:transparent; border:none; border-bottom:2px solid transparent;
+  color:#444; font-family:'VT323',monospace; font-size:16px; letter-spacing:3px;
+  padding:8px 0; cursor:pointer; transition:all .2s; }
+.shop-tab.active { color:var(--sclr,#c8860a); border-bottom-color:var(--sclr,#c8860a); }
+.shop-sell-item { display:flex; align-items:center; gap:10px; padding:10px 0;
+  border-bottom:1px solid #1a1a1a; }
+.shop-sell-icon { font-size:22px; min-width:28px; text-align:center; }
+.shop-sell-info { flex:1; }
+.shop-sell-name { font-size:16px; color:#c8860a; letter-spacing:1px; }
+.shop-sell-owner { font-size:11px; color:#444; letter-spacing:1px; margin-top:2px; }
+.shop-sell-warn { font-size:11px; color:#e74c3c; letter-spacing:1px; margin-top:2px; }
+.shop-sell-price { font-size:16px; color:#f1c40f; min-width:50px; text-align:right; }
+.shop-sell-btn { background:rgba(200,134,10,.15); border:1px solid #c8860a;
+  color:#c8860a; font-family:'VT323',monospace; font-size:14px; letter-spacing:2px;
+  padding:4px 10px; cursor:pointer; border-radius:2px; }
+.shop-sell-btn:hover { background:rgba(200,134,10,.3); }
+.shop-sell-btn.warn { border-color:#e74c3c; color:#e74c3c; background:rgba(231,76,60,.1); }
 .shop-close {
   font-size:13px; color:#333; letter-spacing:2px; cursor:pointer;
   padding:4px 10px; border:1px solid #222; font-family:'VT323',monospace; background:none;
@@ -804,9 +831,10 @@ body::after {
       <div class="hud-name" id="hud-name"></div>
       <div class="hud-hearts" id="hud-hearts"></div>
     <div class="hud-gold" id="hud-gold">🪙 0</div>
+    <div id="hud-time" style="font-size:11px;color:#555;letter-spacing:1px;margin-top:2px;"></div>
     </div>
     <div class="hud-mm">
-      <canvas id="minimap" width="88" height="88"></canvas>
+      <canvas id="minimap" width="128" height="110"></canvas>
     </div>
   </div>
 </div>
@@ -839,20 +867,14 @@ body::after {
       <span class="abtn-icon" id="hud-menu-icon">🗺️</span>
       <span class="abtn-lbl" id="btn-menu-lbl">MENU</span>
     </button>
-    <button class="abtn abtn-s" id="btn-skill" ontouchstart="mA('skill')">
-      <span class="abtn-icon">✦</span>
-      <span class="abtn-lbl">SKILL</span>
+    <button class="abtn abtn-w" id="btn-weapon" ontouchstart="toggleWeapon()" style="display:none;border-color:rgba(200,134,10,.5);background:rgba(200,134,10,.15)">
+      <span class="abtn-icon" id="btn-weapon-icon">🗡️</span>
+      <span class="abtn-lbl">SWAP</span>
     </button>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="abtn abtn-w" id="btn-weapon" ontouchstart="toggleWeapon()" style="display:none;width:48px;height:48px;font-size:12px;border-color:rgba(200,134,10,.5);background:rgba(200,134,10,.15)">
-        <span class="abtn-icon" style="font-size:18px">🗡️</span>
-        <span class="abtn-lbl" style="font-size:10px">SWAP</span>
-      </button>
-      <button class="abtn abtn-a" id="btn-action" ontouchstart="mobileAction()">
-        <span class="abtn-icon" id="btn-action-icon">⚔</span>
-        <span class="abtn-lbl" id="btn-action-lbl">ATK</span>
-      </button>
-    </div>
+    <button class="abtn abtn-a" id="btn-action" ontouchstart="mobileAction()">
+      <span class="abtn-icon" id="btn-action-icon">⚔</span>
+      <span class="abtn-lbl" id="btn-action-lbl">ATK</span>
+    </button>
   </div>
 </div>
 
@@ -1569,7 +1591,7 @@ function showConvergence(){
 // GAME ENGINE
 // ─────────────────────────────────────────────
 const TS=64; // tile size — big, SNES quality
-const COLS=32, ROWS=42; // portrait: taller than wide
+const COLS=128, ROWS=160; // portrait: taller than wide
 
 // World map — open world pub town feel
 // Tile types: 0=grass, 1=stone_floor, 2=wall, 3=water, 4=tree,
@@ -1577,185 +1599,373 @@ const COLS=32, ROWS=42; // portrait: taller than wide
 // World is one open scrolling map — camera follows player
 
 function mkWorld(){
-  const W=COLS, H=ROWS;
   const g=[];
-  for(let r=0;r<H;r++){ g.push([]); for(let c=0;c<W;c++) g[r].push(0); }
+  for(let r=0;r<ROWS;r++){ g.push([]); for(let c=0;c<COLS;c++) g[r].push(0); }
 
-  // ── ROADS ──
-  // North-south road (center-left)
-  for(let r=0;r<H;r++){ g[r][13]=8; g[r][14]=8; g[r][15]=8; }
-  // East-west crossroads at row 18
-  for(let c=0;c<W;c++) g[18][c]=8;
-  // East spur toward bridge (row 10, cols 20-31)
-  for(let c=20;c<W;c++){ g[10][c]=8; g[11][c]=8; }
-  // West spur into thornwood (row 18, cols 0-3 — dead end into trees)
-
-  // ── THE UNNAMED INN — crossroads center ──
-  for(let r=14;r<=20;r++) for(let c=8;c<=13;c++) g[r][c]=1;
-  for(let c=8;c<=13;c++){ g[14][c]=2; g[20][c]=2; }
-  for(let r=14;r<=20;r++){ g[r][8]=2; g[r][13]=2; }
-  g[20][10]=5; // south door
-  g[14][10]=5; // north door (opens to road)
-  // Tables — four desks
-  g[17][9]=7;  // Torvin left
-  g[17][12]=7; // Aeryn right
-  g[18][10]=7; // Coren center
-  g[16][11]=7; // Roland
-  // Chests — upper corners, clear of desks
-  g[15][9]=6; g[15][12]=6;
-
-  // ── GREYPOST TRADING POST — far northwest ──
-  for(let r=2;r<=6;r++) for(let c=1;c<=5;c++) g[r][c]=1;
-  for(let c=1;c<=5;c++){ g[2][c]=2; g[6][c]=2; }
-  for(let r=2;r<=6;r++){ g[r][1]=2; g[r][5]=2; }
-  g[6][3]=5; // south door
-  g[4][2]=7; g[4][3]=7; g[4][4]=7; // counters
-
-  // ── MILLER'S COTTAGE — northwest, abandoned ──
-  for(let r=8;r<=11;r++) for(let c=1;c<=4;c++) g[r][c]=1;
-  for(let c=1;c<=4;c++){ g[8][c]=2; g[11][c]=2; }
-  for(let r=8;r<=11;r++){ g[r][1]=2; g[r][4]=2; }
-  g[11][2]=5;
-  g[9][2]=7; // collapsed table
-  g[9][3]=6; // forgotten chest
-
-  // ── WATCHTOWER — north, east of road ──
-  for(let r=1;r<=4;r++) for(let c=17;c<=20;c++) g[r][c]=1;
-  for(let c=17;c<=20;c++){ g[1][c]=2; g[4][c]=2; }
-  for(let r=1;r<=4;r++){ g[r][17]=2; g[r][20]=2; }
-  g[4][18]=5;
-  g[2][18]=7; g[2][19]=7; // lookout posts
-
-  // ── THORNWOOD — northwest ──
-  const thornwood=[
-    [1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0],[10,0],[11,0],[12,0],
-    [13,0],[13,1],[13,2],[13,3],[13,4],[13,5],[13,6],
-    [12,1],[12,2],[12,3],[12,4],[12,5],[12,6],
-    [11,2],[11,3],[11,4],[11,5],[11,6],[11,7],
-    [10,2],[10,3],[10,4],[10,5],[10,6],[10,7],
-    [9,3],[9,4],[9,5],[9,6],[9,7],
-    [8,4],[8,5],[8,6],
-    [7,3],[7,4],[7,5],[7,6],[7,7],
-    [6,4],[6,5],[6,6],[6,7],
-    [5,4],[5,5],[5,6],[5,7],[5,8],
-    [4,5],[4,6],[4,7],[4,8],
-    [3,5],[3,6],[3,7],[3,8],[3,9],
-    [2,6],[2,7],[2,8],[2,9],[2,10],
-    [1,6],[1,7],[1,8],[1,9],[1,10],[1,11],
-  ];
-  thornwood.forEach(([r,c])=>{ if(r<H&&c<W) g[r][c]=4; });
-
-  // ── HERMIT'S HUT — hidden in thornwood ──
-  g[7][1]=1; g[7][2]=1; // tiny floor
-  g[6][1]=2; g[6][2]=2; // walls
-  g[8][1]=2; g[8][2]=2;
-  g[7][0]=2; // side wall
-  // No door — you squeeze through at [7][2]
-
-  // ── MILLPOND & BRIDGE — northeast ──
-  for(let r=6;r<=13;r++) for(let c=22;c<=29;c++) g[r][c]=3; // water
-  // Shoreline irregularity
-  g[6][22]=3; g[6][23]=3; g[7][22]=3;
-  g[13][28]=3; g[13][29]=3; g[12][29]=3;
-  // Bridge — stone crossing at row 10-11
-  for(let c=22;c<=24;c++){ g[10][c]=8; g[11][c]=8; }
-  // Broken waterwheel structure
-  g[8][22]=2; g[9][22]=2; g[8][23]=2;
-  // East road continues past bridge
-  for(let c=29;c<W;c++){ g[10][c]=8; g[11][c]=8; }
-
-  // ── HARWICK'S IRON — southeast of crossroads ──
-  for(let r=20;r<=25;r++) for(let c=19;c<=24;c++) g[r][c]=1;
-  for(let c=19;c<=24;c++){ g[20][c]=2; g[25][c]=2; }
-  for(let r=20;r<=25;r++){ g[r][19]=2; g[r][24]=2; }
-  g[20][21]=5; // north door facing road
-  g[21][20]=7; g[21][21]=7; g[21][22]=7; // forge/anvil tables
-  g[23][23]=6; // chest of iron
-  // Stable attached east
-  for(let r=21;r<=24;r++) for(let c=25;c<=28;c++) g[r][c]=1;
-  g[21][25]=2; g[24][25]=2; g[24][26]=2; g[24][27]=2; g[24][28]=2;
-  g[21][28]=2; g[22][28]=2; g[23][28]=2;
-  g[24][26]=5; // stable door
-
-  // ── VILLAGE WELL — crossroads center ──
-  g[18][16]=2; // well structure
-  g[17][16]=6; // well bucket/chest placeholder
-
-  // ── NOTICE BOARD — by inn ──
-  g[19][14]=7; // board post
-
-  // ── THE BONEFIELDS — southwest ──
-  // Old graves (stone tiles scattered)
-  const graves=[
-    [22,2],[22,4],[22,6],[22,8],
-    [24,1],[24,3],[24,5],[24,7],[24,9],
-    [26,2],[26,4],[26,6],[26,8],
-    [28,1],[28,3],[28,5],[28,7],
-  ];
-  graves.forEach(([r,c])=>{ if(r<H&&c<W) g[r][c]=2; });
-
-  // ── COLLAPSED CHAPEL — bonefields northwest ──
-  // Partial walls — ruined
-  g[23][0]=2; g[23][1]=2; g[23][2]=2; g[23][3]=2;
-  g[27][0]=2; g[27][1]=2; g[27][2]=2; g[27][3]=2;
-  g[24][0]=2; g[25][0]=2; g[26][0]=2;
-  // Interior floor
-  g[24][1]=1; g[24][2]=1; g[24][3]=1;
-  g[25][1]=1; g[25][2]=1; g[25][3]=1;
-  g[26][1]=1; g[26][2]=1; g[26][3]=1;
-  // Altar
-  g[25][2]=7;
-  g[24][2]=6; // offering chest
-
-  // ── SLIME FLATS — southeast mud ──
-  // Low wet ground near east road south (just grass — spawns defined in spawnEnemies)
-
-  // ── THE DUSKROAD — south approach to keep ──
-  // Road narrows — wall corridor from row 32 to 36
-  for(let r=32;r<=37;r++){
-    g[r][13]=2; g[r][14]=8; g[r][15]=8; g[r][16]=2;
+  function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<ROWS&&c>=0&&c<COLS) g[r][c]=t; }
+  function walls(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); for(let c=c1;c<=c2;c++){if(r1>=0&&r1<ROWS){g[r1][c]=2;}if(r2>=0&&r2<ROWS){g[r2][c]=2;}} for(let r=r1;r<=r2;r++){if(c1>=0&&c1<COLS)g[r][c1]=2;if(c2>=0&&c2<COLS)g[r][c2]=2;} }
+  function door(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=5;}
+  function table(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=7;}
+  function chest(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=6;}
+  function stair(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=9;}
+  function hroad(r,c1,c2){ for(let c=c1;c<=c2;c++) if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(g[r][c]===0||g[r][c]===4||g[r][c]===10)) g[r][c]=8; }
+  function vroad(c,r1,r2){ for(let r=r1;r<=r2;r++) if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(g[r][c]===0||g[r][c]===4||g[r][c]===10)) g[r][c]=8; }
+  function shallow(r1,c1,r2,c2){ rect(r1,c1,r2,c2,3); }
+  function deep(r1,c1,r2,c2){ rect(r1,c1,r2,c2,12); }
+  function snow(r1,c1,r2,c2){ rect(r1,c1,r2,c2,10); }
+  function lava(r1,c1,r2,c2){ rect(r1,c1,r2,c2,11); }
+  function tree(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS&&g[r][c]===0)g[r][c]=4;}
+  function treeRect(r1,c1,r2,c2,density){
+    for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++)
+      if(Math.random()<density&&r>=0&&r<ROWS&&c>=0&&c<COLS&&g[r][c]===0) g[r][c]=4;
   }
-  // Guard towers flanking road
-  for(let r=30;r<=33;r++) for(let c=10;c<=12;c++) g[r][c]=1;
-  g[30][10]=2; g[30][11]=2; g[30][12]=2;
-  g[33][10]=2; g[33][12]=2;
-  g[30][10]=2; g[31][10]=2; g[32][10]=2; g[33][10]=2;
-  g[30][12]=2; g[31][12]=2; g[32][12]=2; g[33][12]=2;
-  g[33][11]=5;
-  for(let r=30;r<=33;r++) for(let c=17;c<=19;c++) g[r][c]=1;
-  g[30][17]=2; g[30][18]=2; g[30][19]=2;
-  g[33][17]=2; g[33][19]=2;
-  g[30][17]=2; g[31][17]=2; g[32][17]=2; g[33][17]=2;
-  g[30][19]=2; g[31][19]=2; g[32][19]=2; g[33][19]=2;
-  g[33][18]=5;
+  function wall(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=2;}
 
-  // ── THE KEEP GATE — dungeon entrance ──
-  // Gate walls
-  for(let c=11;c<=18;c++) g[38][c]=2;
-  // Gate opening
-  g[38][14]=2; g[38][15]=2;
-  // Flanking towers
-  for(let r=36;r<=40;r++) for(let c=11;c<=13;c++) g[r][c]=2;
-  for(let r=36;r<=40;r++) for(let c=16;c<=18;c++) g[r][c]=2;
-  // Keep floor approach
-  for(let r=39;r<=41;r++) for(let c=13;c<=16;c++) g[r][c]=1;
-  // Stairwell — actual dungeon entry
-  g[40][14]=9; g[40][15]=9;
-  // Courtyard before gate
-  for(let r=37;r<=38;r++) for(let c=13;c<=16;c++) g[r][c]=1;
+  // ═══════════════════════════════════════════════════════
+  // ROADS — the arteries of the world
+  // ═══════════════════════════════════════════════════════
+  // Main N-S spine (cols 58-60) — The Long Road
+  for(let r=10;r<155;r++){ g[r][58]=8; g[r][59]=8; g[r][60]=8; }
+  // Main E-W crossroads (rows 72-73)
+  hroad(72,5,122); hroad(73,5,122);
+  // Northern highland road (row 28-29, cols 20-90)
+  hroad(28,20,90); hroad(29,20,90);
+  // Coastal road (rows 10-12, cols 50-120)
+  hroad(10,50,120); hroad(11,50,120);
+  // Western snow road (row 55-56, cols 0-40)
+  hroad(55,0,40); hroad(56,0,40);
+  // Duskroad approach — narrowed walled corridor south
+  for(let r=105;r<145;r++){ g[r][57]=8;g[r][58]=8;g[r][59]=8;g[r][60]=8;g[r][61]=8; }
+  // East road through ash plains
+  hroad(72,80,118); hroad(73,80,118);
+  // Southeast farm road
+  hroad(85,70,100); hroad(86,70,100);
+  // Marsh causeway
+  hroad(52,85,127);
 
-  // ── SCATTERED TREES on open grass ──
-  const extraTrees=[
-    [3,11],[4,12],[5,13],[6,8],[7,9],[8,10],[9,11],[10,12],
-    [15,0],[16,1],[17,2],[19,0],[20,0],[21,1],
-    [22,11],[23,12],[24,13],[25,12],[26,11],
-    [29,18],[30,19],[31,20],[32,21],[33,22],
-    [15,17],[16,18],[17,19],[19,20],[20,21],
-    [1,21],[2,22],[3,23],[4,24],
-    [35,5],[36,6],[37,4],[38,3],
-    [29,8],[30,7],[31,6],[32,5],
-  ];
-  extraTrees.forEach(([r,c])=>{ if(r<H&&c<W&&g[r][c]===0) g[r][c]=4; });
+  // ═══════════════════════════════════════════════════════
+  // FAR NORTH — THE SEA COAST & GREYPORT
+  // rows 0-14, cols 30-127
+  // ═══════════════════════════════════════════════════════
+  // Open sea (deep water)
+  deep(0,30,7,127);
+  // Coastal tide pools (shallow)
+  shallow(8,30,12,127);
+  // Sandy beach (grass/road)
+  hroad(13,30,127); hroad(14,30,127);
+
+  // GREYPORT — port town, rows 10-22, cols 95-118
+  // Harbor
+  shallow(15,100,22,118);
+  deep(0,100,14,118);
+  // Dock structures (walls over water)
+  hroad(14,100,118); // dock boardwalk
+  for(let c=102;c<=116;c+=4){ g[14][c]=2; g[15][c]=2; } // dock posts
+  // Harbormaster's office
+  walls(15,95,21,101); door(21,98); table(17,97); table(17,99); chest(19,96);
+  // Ship captain's quarters
+  walls(15,103,21,109); door(21,106); table(17,105); table(17,108); chest(18,108);
+  // Fish market
+  walls(15,111,19,117); door(19,114); table(17,112); table(17,115);
+  // Sailor's inn
+  walls(22,95,28,105); door(28,100); table(24,97); table(24,103); chest(26,97);
+  // Fishmonger house
+  walls(22,107,26,113); door(26,110); table(24,109);
+  // Chandler's (candle/supply shop)
+  walls(22,115,26,121); door(26,118); table(24,116); table(24,120); chest(24,119);
+  // Boats at dock (chest tiles as boat placeholders)
+  g[13][104]=6; g[13][108]=6; g[13][112]=6; // small boats
+  g[12][106]=6; // the ship (larger position)
+
+  // ═══════════════════════════════════════════════════════
+  // NORTHWEST — THE THORNWOOD REACHES
+  // rows 10-70, cols 0-45
+  // ═══════════════════════════════════════════════════════
+  treeRect(10,0,70,45,0.72);
+  // Thornwood paths (cleared corridors)
+  for(let r=10;r<70;r++) for(let c=20;c<24;c++) if(g[r][c]===4) g[r][c]=0; // N-S path
+  hroad(35,0,45); hroad(36,0,45); // E-W path
+  // River cutting through (shallow)
+  for(let c=0;c<50;c++) shallow(62,c,64,c);
+  // River ford crossings
+  g[63][22]=8; g[63][23]=8; // ford 1
+  g[63][38]=8; g[63][39]=8; // ford 2
+
+  // HERMIT NETWORK — 4 hidden huts
+  // Hut 1 — elder hermit
+  walls(18,8,23,14); door(23,11); table(20,10); table(20,12); chest(22,13);
+  // Hut 2 — herb gatherer
+  walls(30,5,35,10); door(35,7); table(32,7); chest(33,9);
+  // Hut 3 — runekeeper
+  walls(45,15,50,20); door(50,17); table(47,17); table(47,19); chest(48,19);
+  // Hut 4 — watcher
+  walls(58,6,63,12); door(63,9); table(60,8); chest(61,11);
+
+  // Pre-civilization ruins (stone circles + collapsed arches)
+  [[25,30],[26,32],[25,34],[23,33],[23,31]].forEach(([r,c])=>wall(r,c)); // stone circle 1
+  [[40,25],[41,27],[40,29],[38,28],[38,26]].forEach(([r,c])=>wall(r,c)); // stone circle 2
+  wall(52,20);wall(52,21);wall(53,22);wall(54,21); // collapsed arch
+
+  // Rootvault entrance (dungeon - NW)
+  walls(48,28,54,35); door(54,31); stair(51,31); stair(51,32);
+  chest(50,33); table(50,29);
+
+  // ═══════════════════════════════════════════════════════
+  // NORTH — THE HIGHLAND MOORS
+  // rows 14-55, cols 50-90
+  // ═══════════════════════════════════════════════════════
+  // Standing stones (scattered wall tiles)
+  [[18,55],[18,58],[16,62],[20,65],[17,70],[22,68],[19,75],[21,80],[16,85]].forEach(([r,c])=>wall(r,c));
+  // Stone circle
+  [[20,72],[20,75],[20,78],[23,78],[23,75],[23,72],[21,71],[21,79]].forEach(([r,c])=>wall(r,c));
+  // Hollow Stones dungeon entrance (inside the stone circle)
+  stair(22,74); stair(22,75);
+
+  // Watchtower network
+  // Tower 1 — north
+  walls(14,60,20,66); door(20,63); table(16,62); table(16,64);
+  // Tower 2 — east
+  walls(14,82,20,88); door(20,85); table(16,84); table(16,86);
+  // Tower 3 — connected by road
+  walls(30,68,36,74); door(36,71); table(32,70); table(32,72); chest(34,73);
+
+  // Merchant camp (near stones)
+  table(25,60); table(25,62); chest(25,64); // outdoor market stalls
+  wall(24,59); wall(24,65); // camp boundary posts
+
+  // Highland tree clusters
+  treeRect(14,50,55,60,0.18);
+  treeRect(14,80,30,90,0.22);
+
+  // ═══════════════════════════════════════════════════════
+  // NORTHEAST — MILLHAVEN & THE WETLANDS
+  // rows 15-55, cols 90-127
+  // ═══════════════════════════════════════════════════════
+  // Main lake (deep center, shallow edges)
+  deep(18,100,42,122);
+  shallow(15,97,45,127);
+  // Marsh (shallow water patches)
+  for(let r=46;r<58;r++) for(let c=90;c<127;c++)
+    if(Math.random()<.45) shallow(r,c,r,c);
+  // Lake island
+  rect(26,108,36,116,0); // island floor
+  treeRect(26,108,36,116,0.3);
+  walls(29,110,33,114); door(33,112); stair(31,112); stair(31,113); // Drowned Archive entrance
+  chest(30,113);
+
+  // MILLHAVEN DOCK
+  hroad(44,90,100); // dock road
+  // Dock structure
+  for(let c=95;c<=102;c++) g[43][c]=8; // boardwalk
+  for(let c=95;c<=102;c+=3){ g[42][c]=2; g[41][c]=2; } // dock posts
+  g[40][97]=6; g[40][99]=6; // boats
+  // Mill building
+  walls(35,90,43,97); door(43,93); table(37,92); table(37,95); table(39,93); chest(41,95);
+  // Miller cottage
+  walls(28,88,34,94); door(34,91); table(30,90); table(30,92); chest(32,93);
+  // Fisherman's hut
+  walls(45,88,51,94); door(45,91); table(47,90); chest(48,93);
+  // Widow's house
+  walls(45,96,51,102); door(45,99); table(47,98); table(47,101); chest(49,101);
+  // Waterwheel
+  wall(37,97); wall(38,97); wall(37,98);
+  // Causeway posts
+  for(let c=90;c<127;c+=5) wall(52,c);
+
+  // ═══════════════════════════════════════════════════════
+  // CENTER — VAELTHAR'S CROSSING (expanded village)
+  // rows 60-85, cols 45-78
+  // ═══════════════════════════════════════════════════════
+  // THE UNNAMED INN — northeast of crossroads, guaranteed grassland
+  // Clear the area first (removes any random trees/roads)
+  for(let _r=63;_r<=71;_r++) for(let _c=74;_c<=82;_c++) g[_r][_c]=0;
+  walls(63,74,71,82); door(71,78); door(63,78);
+  table(67,76); table(67,81); // Torvin left, Aeryn right
+  table(68,78); // Coren center
+  table(66,79); // Roland
+  chest(66,76); chest(66,81);
+
+  // Village house 1 — blacksmith apprentice
+  walls(63,45,69,51); door(69,48); table(65,47); table(65,50);
+  // Village house 2 — innkeeper's family
+  walls(63,63,69,69); door(69,66); table(65,65); chest(67,68);
+  // Village house 3 — elder
+  walls(75,48,81,54); door(81,51); table(77,50); table(77,53); chest(79,53);
+  // Village house 4 — healer
+  walls(75,63,81,69); door(81,66); table(77,65); chest(79,68);
+
+  // GREYPOST TRADING POST — northwest of crossroads
+  walls(50,40,57,48); door(57,44); table(52,42); table(52,44); table(52,46); chest(54,46);
+
+  // Village well + notice board
+  wall(74,61); chest(73,61); // well
+  table(74,63); // notice board
+
+  // Village square details
+  treeRect(74,56,81,58,0.8); // village green trees
+
+  // ═══════════════════════════════════════════════════════
+  // EAST — THE ASH PLAINS
+  // rows 55-100, cols 85-119
+  // ═══════════════════════════════════════════════════════
+  // Volcanic rock outcroppings
+  [[60,90],[60,92],[61,91],[65,105],[65,107],[66,106],
+   [72,115],[73,114],[73,116],[80,98],[80,100],[81,99],
+   [88,110],[88,112],[89,111]].forEach(([r,c])=>wall(r,c));
+  // Lava vents (small lava patches)
+  lava(62,95,64,97); lava(75,108,77,110); lava(85,95,87,97);
+  // Dragon's Spine (impassable — wall tile band, east edge)
+  for(let r=20;r<130;r++) for(let c=120;c<128;c++) wall(r,c);
+  // Ash/burnt trees
+  treeRect(55,85,100,119,0.08);
+
+  // Soldiers' outpost
+  walls(68,90,74,96); door(74,93); table(70,92); table(70,94); chest(72,95);
+  // Second outpost (watchtower)
+  walls(68,100,74,106); door(74,103); table(70,102); table(70,104); chest(72,105);
+
+  // Ember Vault entrance (sealed cave in Dragon's Spine)
+  for(let r=85;r<=92;r++) for(let c=117;c<=120;c++) wall(r,c); // sealed entrance
+  g[88][118]=5; g[88][119]=5; // unsealed section
+  stair(89,118); stair(89,119);
+
+  // ═══════════════════════════════════════════════════════
+  // SOUTHEAST — HARWICK'S QUARTER & FARMLAND
+  // rows 75-100, cols 70-95
+  // ═══════════════════════════════════════════════════════
+  // HARWICK'S IRON SMITHY
+  walls(78,72,86,80); door(78,76); table(80,74); table(80,75); table(80,76); chest(84,78);
+  // Stable
+  walls(80,81,86,87); door(86,84); table(82,83);
+  // Forge outside
+  wall(87,75); wall(87,76); // anvil posts
+
+  // FARM
+  walls(77,88,83,95); door(83,92); table(79,90); table(79,93); chest(81,94); // barn
+  // Farmhouse
+  walls(77,96,83,103); door(83,100); table(79,98); table(79,101); chest(81,102);
+  // Crop fields (road tile = tilled)
+  rect(85,88,95,103,8);
+  // Irrigation ditches (shallow water)
+  for(let r=85;r<=95;r+=3) shallow(r,88,r,103);
+
+  // Hidden cellar under barn — Saltmine entrance
+  stair(82,89); stair(82,90); // under barn floor
+
+  // ═══════════════════════════════════════════════════════
+  // SOUTHWEST — THE BONEFIELDS (expanded)
+  // rows 78-120, cols 0-48
+  // ═══════════════════════════════════════════════════════
+  // Graves (wall tiles in rows/cols)
+  for(let r=78;r<118;r+=3) for(let c=2;c<42;c+=4)
+    if(Math.random()<0.55) wall(r,c);
+  // Collapsed chapel
+  walls(85,5,94,16); door(94,10);
+  table(88,8); table(90,12); chest(87,14); // altar + chest
+  wall(88,10); // central altar post
+  // Catacombs entrance (under chapel)
+  stair(92,10); stair(92,11);
+
+  // Gravedigger's hut
+  walls(82,20,87,26); door(87,23); table(84,22); chest(85,25);
+  // Wandering priest's camp
+  table(100,10); table(100,12); chest(100,14); // outdoor camp
+  wall(99,9); wall(99,15); // camp posts
+
+  // Old battlefield (scattered debris)
+  for(let r=105;r<120;r++) for(let c=0;c<35;c++)
+    if(Math.random()<0.07) wall(r,c);
+
+  // ═══════════════════════════════════════════════════════
+  // WEST — THE FROZEN FOOTHILLS
+  // rows 35-78, cols 0-22
+  // ═══════════════════════════════════════════════════════
+  snow(35,0,78,20);
+  // Ice patches over snow
+  for(let r=35;r<78;r++) for(let c=0;c<20;c++)
+    if(Math.random()<0.12) shallow(r,c,r,c); // frozen puddles
+  // Dwarven road remnants
+  hroad(55,0,20); hroad(56,0,20);
+
+  // Dwarven outpost (2 buildings)
+  walls(45,4,51,10); door(51,7); table(47,6); table(47,9); chest(49,9);
+  walls(45,12,51,18); door(51,15); table(47,14); table(47,17); chest(49,17);
+
+  // Frost cave entrance
+  walls(60,5,68,14); door(68,9);
+  stair(64,8); stair(64,9); stair(64,10); // Frost Vaults entrance (wide)
+  chest(62,12); table(62,6);
+
+  // ═══════════════════════════════════════════════════════
+  // DUSKROAD APPROACH — SOUTH
+  // rows 98-135, cols 42-76
+  // ═══════════════════════════════════════════════════════
+  // Ruined village (2 collapsed houses)
+  walls(98,45,104,52); door(104,48); table(100,47); // ruined house 1 (partial)
+  walls(98,65,104,72); door(104,68); table(100,67); chest(101,70);
+  // Walled road corridor
+  for(let r=105;r<138;r++){ wall(r,56); wall(r,62); }
+  // Guard towers
+  walls(108,50,114,55); door(114,52); table(110,52);
+  walls(108,63,114,68); door(114,65); table(110,65); chest(111,67);
+
+  // ═══════════════════════════════════════════════════════
+  // FAR SOUTH — THE SHATTERED KEEP
+  // rows 138-158, cols 44-74
+  // ═══════════════════════════════════════════════════════
+  // Outer keep wall
+  for(let c=44;c<=74;c++){ wall(138,c); wall(157,c); }
+  for(let r=138;r<=157;r++){ wall(r,44); wall(r,74); }
+  // Main gate
+  door(138,57); door(138,58); door(138,59);
+  // Gate towers
+  walls(134,50,139,56); walls(134,61,139,67);
+  // Courtyard
+  rect(139,45,156,73,1);
+  // Inner keep
+  walls(142,48,154,70);
+  door(142,57); door(142,58); door(142,59); // inner gate
+  // Main dungeon stairwells
+  stair(152,57); stair(152,58); stair(152,59);
+  // East wing breach
+  for(let r=145;r<=152;r++) g[r][70]=0;
+  rect(145,70,152,73,1);
+  stair(148,71); stair(148,72);
+  // Courtyard chests + tables
+  chest(142,50); chest(142,68);
+  table(146,52); table(146,66);
+  wall(150,59); // keep well
+
+  // Inn spur — south door (row71,col78) down to E-W crossroads (row73)
+  for(let r=71;r<=73;r++) g[r][78]=8;
+  // Inn west spur — col78 west to N-S road col60 along row72
+  for(let c=61;c<=78;c++) if(g[72][c]===0||g[72][c]===4) g[72][c]=8;
+
+  // ── RE-STAMP INN SOUTH DOOR (after road stamp so it survives) ──
+  g[71][78]=5; // inn south door
+
+  // ── RE-STAMP ROADS LAST (clear any obstacles placed on them) ──
+  for(let r=10;r<155;r++){ g[r][58]=8; g[r][59]=8; g[r][60]=8; } // main N-S spine
+  hroad(72,5,122); hroad(73,5,122); // crossroads E-W
+  hroad(28,20,90); hroad(29,20,90); // highland road
+  hroad(10,50,120); hroad(11,50,120); // coastal road
+  hroad(55,0,40); hroad(56,0,40); // snow road
+  for(let r=105;r<145;r++){ g[r][57]=8;g[r][58]=8;g[r][59]=8;g[r][60]=8;g[r][61]=8; } // duskroad
+  hroad(52,85,127); // marsh causeway
+  hroad(85,70,100); hroad(86,70,100); // farm road
+
+  // ═══════════════════════════════════════════════════════
+  // SCATTERED WORLD DETAILS
+  // ═══════════════════════════════════════════════════════
+  // World border trees (frame the edges)
+  treeRect(0,0,9,29,0.4);   // NW coastal fringe
+  treeRect(70,0,85,10,0.25); // SW woods edge
+  // Random world trees on open grass
+  for(let i=0;i<400;i++){
+    const r=5+Math.floor(Math.random()*148);
+    const c=1+Math.floor(Math.random()*119);
+    if(g[r][c]===0) g[r][c]=4; // only on empty grass
+  }
 
   return g;
 }
@@ -1783,7 +1993,8 @@ const GS={
   enemies:[],projectiles:[],particles:[],
   keys:{},mk:{},
   fr:0,lt:0,raf:null,
-  cam:{x:0,y:0}, // camera offset in pixels
+  cam:{x:0,y:0},
+  tick:6000, // time of day counter (starts at 8am — full daylight)
   npcs:[],
   sable:null,
 };
@@ -1839,7 +2050,7 @@ let activePartyTab = 'map';
 function initPlayer(){
   const c=_HERO;
   // Start player outside inn door
-  const startX=11*TS, startY=19*TS;
+  const startX=78*TS+TS/2, startY=69*TS+TS/2;
   const spd={torvin:.9,aeryn:1.25,roland:1.05,coren:.95}[c.id]||1;
   const hp={torvin:6,aeryn:5,roland:4,coren:4}[c.id]||4;
   GS.p={
@@ -1872,8 +2083,9 @@ function initPlayer(){
   if(_HERO&&_HERO.id==='coren'){
     if(_SUB&&_SUB.id==='elementalist'){
       ECONOMY.owned['coren_wand_1']=true;
+      ECONOMY.owned['coren_light_1']=true; // light orb — available to equip
       LOADOUT.coren.primary='coren_wand_1';
-      LOADOUT.coren.secondary='coren_wand_1';
+      LOADOUT.coren.secondary='coren_wand_1'; // starts with wand; swap for light
       ACTIVE_WEAPON.coren='primary';
       PARTY.knownSpells=['spell_scatter','spell_surge'];
       LOADOUT.coren.spellA='spell_scatter';
@@ -1925,6 +2137,8 @@ function initPlayer(){
   // Camera starts centered on player
   centerCam();
   updateHUD();
+  updateWeaponBtn(); // show SWAP if secondary equipped
+  updateActionBtn();
 }
 
 function centerCam(){
@@ -1945,14 +2159,14 @@ function spawnNPCs(){
   // Party members visible in the inn — hero is NOT an NPC
   const heroId=_HERO?_HERO.id:null;
   GS.npcs=[
-    {id:'torvin',x:9*TS+TS/2,y:17*TS+TS/2,color:'#c8860a',af:0,at:0,facing:0},
-    {id:'aeryn', x:12*TS+TS/2,y:17*TS+TS/2,color:'#2ecc71',af:0,at:0,facing:0},
-    {id:'roland',x:11*TS+TS/2,y:16*TS+TS/2,color:'#e67e22',af:0,at:0,facing:2},
+    {id:'torvin',x:76*TS+TS/2,y:67*TS+TS/2,color:'#c8860a',af:0,at:0,facing:0},
+    {id:'aeryn', x:81*TS+TS/2,y:67*TS+TS/2,color:'#2ecc71',af:0,at:0,facing:0},
+    {id:'roland',x:79*TS+TS/2,y:66*TS+TS/2,color:'#e67e22',af:0,at:0,facing:2},
     {id:'coren', x:4*TS+TS/2,y:8*TS+TS/2,color:'#9b59b6',af:0,at:0,facing:1},
   ].filter(n=>n.id!==_HERO.id);
   // Set NPC default weapons based on party defaults
   GS.npcs.forEach(n=>{
-    if(_HERO&&n.id===_HERO.id) return; // never overwrite hero loadout
+    if(_HERO&&n.id===_HERO.id) return;
     if(n.id==='torvin'){
       // Torvin NPC — always owns axe, sword+shield equipped by default (Warden)
       ECONOMY.owned['torvin_axe_1']=true;
@@ -2005,22 +2219,33 @@ function spawnNPCs(){
     {id:'harwick', x:HARWICKS_POS.x, y:HARWICKS_POS.y, icon:'🧔', name:'Harwick', shop:'harwicks', color:'#c8860a'},
   ];
 
+
+  // World NPCs spawn per-region on transition (not in center)
+
   GS.enemies=[
-    // Slime flats — southeast, well clear of inn
-    {type:'slime',   x:20*TS,y:26*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:22*TS,y:27*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:19*TS,y:28*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:24*TS,y:25*TS,hp:4,mhp:4,dmg:1,spd:1.3,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
-    // Bonefields — southwest
-    {type:'skeleton',x:4*TS, y:24*TS,hp:5,mhp:5,dmg:2,spd:1.5,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:6*TS, y:26*TS,hp:5,mhp:5,dmg:2,spd:1.5,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:2*TS, y:28*TS,hp:5,mhp:5,dmg:2,spd:1.5,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
-    // Duskroad — approaching keep
-    {type:'skeleton',x:14*TS,y:33*TS,hp:6,mhp:6,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:15*TS,y:35*TS,hp:6,mhp:6,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
-    // Keep courtyard
-    {type:'skeleton',x:14*TS,y:39*TS,hp:8,mhp:8,dmg:3,spd:1.7,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:16*TS,y:39*TS,hp:8,mhp:8,dmg:3,spd:1.7,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    // Thornwood — slimes and basic skeletons (near inn, lower difficulty)
+    {type:'slime',   x:25*TS,y:25*TS,hp:2,mhp:2,dmg:1,spd:1.0,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:30*TS,y:30*TS,hp:2,mhp:2,dmg:1,spd:1.0,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:18*TS,y:40*TS,hp:3,mhp:3,dmg:1,spd:1.1,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    // Highland moors — skeleton patrols
+    {type:'skeleton',x:70*TS,y:15*TS,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:80*TS,y:20*TS,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    // Southeast slime flats — irrigation ditches
+    {type:'slime',   x:92*TS,y:87*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:96*TS,y:90*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:90*TS,y:92*TS,hp:4,mhp:4,dmg:1,spd:1.3,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
+    // Bonefields — southwest graveyard
+    {type:'skeleton',x:8*TS, y:80*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:15*TS,y:85*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:5*TS, y:95*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:20*TS,y:100*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    // Duskroad — corridor guards
+    {type:'skeleton',x:58*TS,y:108*TS,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:59*TS,y:115*TS,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    // Keep courtyard — elite guards
+    {type:'skeleton',x:55*TS,y:140*TS,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:63*TS,y:140*TS,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:58*TS,y:145*TS,hp:12,mhp:12,dmg:4,spd:1.8,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0},
   ];
 }
 
@@ -2029,7 +2254,8 @@ function loop(ts){
   GS.raf=requestAnimationFrame(loop);
   if(GS.paused) return;
   const dt=Math.min((ts-GS.lt)/16.67,3); GS.lt=ts; GS.fr++;
-  update(dt); render();
+  GS.tick++;
+  update(dt); updateFade(dt); render();
 }
 
 function enemySolidAt(wx,wy){
@@ -2037,15 +2263,38 @@ function enemySolidAt(wx,wy){
   if(r<0||r>=ROWS||c<0||c>=COLS) return true;
   const t=WORLD[r][c];
   // Enemies blocked by walls, trees, water, tables, chests AND doors/buildings
-  return t===1||t===2||t===3||t===4||t===5||t===7||
-    (t===6&&!(typeof openedChests!=='undefined'&&openedChests.has(r+','+c)));
+  return t===1||t===2||t===4||t===5||t===7||t===11||
+    (t===6&&!(typeof openedChests!=='undefined'&&openedChests.has(r+','+c))); // enemies blocked by buildings/lava, not water
 }
 
 function solidAt(wx,wy){
+  const w=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+  const cols=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+  const rows=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
   const c=Math.floor(wx/TS), r=Math.floor(wy/TS);
-  if(r<0||r>=ROWS||c<0||c>=COLS) return true;
-  const t=WORLD[r][c];
-  return t===2||t===4||t===3||t===7||(t===6&&!(typeof openedChests!=='undefined'&&openedChests.has(r+','+c))); // wall, tree, water, table, unopened chest
+  if(r<0||r>=rows||c<0||c>=cols) return true;
+  const t=w[r][c];
+  // Locked doors block passage
+  if(t===5 && typeof isDoorLocked==='function' && isDoorLocked(r,c)) return true;
+  return t===2||t===4||t===7||t===11||(t===6&&!(typeof openedChests!=='undefined'&&openedChests.has(r+','+c)));
+}
+
+
+function checkLockedDoors(){
+  if(!GS.p||_dungeon_fading) return;
+  const w=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+  const cols=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+  const rows=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
+  const pc=Math.floor(GS.p.x/TS), pr=Math.floor(GS.p.y/TS);
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    const r=pr+dr, c=pc+dc;
+    if(r<0||r>=rows||c<0||c>=cols) continue;
+    if(w[r]&&w[r][c]===5&&typeof isDoorLocked==='function'&&isDoorLocked(r,c)){
+      const el=document.getElementById('interact-prompt');
+      if(el){ el.textContent='🔒 E · LOCKED DOOR'; el.classList.add('on'); }
+      return;
+    }
+  }
 }
 
 function update(dt){
@@ -2059,7 +2308,8 @@ function update(dt){
   const moving=dx!==0||dy!==0;
   if(dx&&dy){dx*=.707;dy*=.707;}
 
-  const spd=p.spd*dt;
+  const _wt=WORLD[Math.floor(GS.p.y/TS)]&&WORLD[Math.floor(GS.p.y/TS)][Math.floor(GS.p.x/TS)];
+  const spd=p.spd*(_wt===12?0.15:_wt===3?0.45:_wt===10?0.7:1)*dt;
   if(dx){
     p.x+=dx*spd;
     if(solidAt(p.x-p.w/2,p.y+p.h/4)||solidAt(p.x+p.w/2,p.y+p.h/4)) p.x-=dx*spd;
@@ -2071,8 +2321,8 @@ function update(dt){
   // Facing — 8 directions: 0=N,1=E,2=S,3=W,4=NE,5=SE,6=SW,7=NW
   if(moving){
     const ax=Math.abs(dx), ay=Math.abs(dy);
-    if(dx===0)      p.facing=dy>0?2:0;           // pure vertical
-    else if(dy===0) p.facing=dx>0?1:3;           // pure horizontal
+    if(dx===0)      p.facing=dy>0?2:0;
+    else if(dy===0) p.facing=dx>0?1:3;
     else if(dx>0&&dy<0) p.facing=4;              // NE
     else if(dx>0&&dy>0) p.facing=5;              // SE
     else if(dx<0&&dy>0) p.facing=6;              // SW
@@ -2099,9 +2349,10 @@ function update(dt){
   GS.enemies.forEach(e=>{
     if(e.hf>0)e.hf-=dt; if(e.ac>0)e.ac-=dt;
     const ex=p.x-e.x,ey=p.y-e.y,dist=Math.hypot(ex,ey)||1;
-    const DETECT=TS*5;   // 5 tiles — notice player
-    const CHASE=TS*7;    // 7 tiles — keep chasing once alerted
-    const LOSE=TS*9;     // 9 tiles — give up chase
+    const _nightMult=typeof isNight==='function'&&isNight()?1.4:1.0;
+    const DETECT=TS*5*_nightMult;   // wider detection at night
+    const CHASE=TS*7*_nightMult;
+    const LOSE=TS*9*_nightMult;
 
     // Alert state — set when player enters detection range
     if(!e._alerted && dist<DETECT && !e._blind) e._alerted=true;
@@ -2114,11 +2365,11 @@ function update(dt){
         const nx=e.x+ex/dist*spd;
         const ny=e.y+ey/dist*spd;
         // Try full move, then axis-separated fallbacks — enemies can't enter buildings
-        if(!enemySolidAt(nx,ny+e.sz*.3)&&!enemySolidAt(nx,ny-e.sz*.3)){
+        if(!dungeonSolidAt(nx,ny+e.sz*.3)&&!dungeonSolidAt(nx,ny-e.sz*.3)){
           e.x=nx; e.y=ny;
-        } else if(!enemySolidAt(nx,e.y+e.sz*.3)&&!enemySolidAt(nx,e.y-e.sz*.3)){
+        } else if(!dungeonSolidAt(nx,e.y+e.sz*.3)&&!dungeonSolidAt(nx,e.y-e.sz*.3)){
           e.x=nx; // slide horizontally
-        } else if(!enemySolidAt(e.x,ny+e.sz*.3)&&!enemySolidAt(e.x,ny-e.sz*.3)){
+        } else if(!dungeonSolidAt(e.x,ny+e.sz*.3)&&!dungeonSolidAt(e.x,ny-e.sz*.3)){
           e.y=ny; // slide vertically
         }
         // Clamp to map bounds
@@ -2143,8 +2394,8 @@ function update(dt){
       e._driftTimer-=dt;
       const ndx=e.x+e._driftX*dt;
       const ndy=e.y+e._driftY*dt;
-      if(!enemySolidAt(ndx,e.y)) e.x=ndx;
-      if(!enemySolidAt(e.x,ndy)) e.y=ndy;
+      if(!dungeonSolidAt(ndx,e.y)) e.x=ndx;
+      if(!dungeonSolidAt(e.x,ndy)) e.y=ndy;
     }
     e.at_+=dt;if(e.at_>12){e.at_=0;e.af=(e.af+1)%2;}
   });
@@ -2164,12 +2415,15 @@ function update(dt){
   // Chest proximity
   nearChest=null;
   if(GS.p){
+    const _cw=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+    const _cCOLS=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+    const _cROWS=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
     const _pc=Math.floor(GS.p.x/TS),_pr=Math.floor(GS.p.y/TS);
     let _found=false;
     for(let _dr=-2;_dr<=2&&!_found;_dr++){
       for(let _dc=-2;_dc<=2&&!_found;_dc++){
         const _r=_pr+_dr,_c=_pc+_dc;
-        if(_r>=0&&_r<ROWS&&_c>=0&&_c<COLS&&WORLD[_r][_c]===6){
+        if(_r>=0&&_r<_cROWS&&_c>=0&&_c<_cCOLS&&_cw[_r][_c]===6){
           if(Math.hypot(GS.p.x-(_c*TS+TS/2),GS.p.y-(_r*TS+TS/2))<TS*1.6){
             nearChest={r:_r,c:_c}; _found=true;
           }
@@ -2177,6 +2431,9 @@ function update(dt){
       }
     }
   }
+  checkStairs();
+  checkLockedDoors();
+  checkRegionEdge();
   checkNPCProximity();
   checkShopProximity();
   updateActionBtn();
@@ -2202,14 +2459,14 @@ function atk(){
     0:-Math.PI/2,1:0,2:Math.PI/2,3:Math.PI,
     4:-Math.PI/4,5:Math.PI/4,6:Math.PI*3/4,7:-Math.PI*3/4
   };
-  p.atkA=angs[p.facing]||0;
+  p.atkA=(angs[p.facing]!==undefined)?angs[p.facing]:0;
   const type=getAttackType(p);
   const dmg=(p.dmg||1)+(p.dmgBoost||0);
 
   if(type==='bow'){
     // Aeryn ranged — arrow projectile
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     GS.projectiles.push({x:p.x,y:p.y,vx:d[0]*7,vy:d[1]*7,dmg,color:'#c8a040',sz:4,life:80,kind:'arrow',angle:Math.atan2(d[1],d[0])});
     if(p.atkA!==undefined) spawnArrowParticles(p.x,p.y,p.atkA);
 
@@ -2245,7 +2502,7 @@ function atk(){
     const effect=spell?spell.effect:'single';
     const sDmg=spell?spell.dmg:dmg;
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     if(effect==='nova'){
       GS.enemies.forEach(e=>{
         if(Math.hypot(e.x-p.x,e.y-p.y)<TS*3){
@@ -2281,7 +2538,7 @@ function atk(){
     const effect=spell?spell.effect:'spread';
     const wDmg=spell?spell.dmg:1;
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     const _pf=p.facing;
     const perp={0:[1,0],1:[0,1],2:[1,0],3:[0,1],4:[_s,_s],5:[-_s,_s],6:[_s,_s],7:[_s,-_s]}[_pf]||[1,0];
     if(effect==='burst'){
@@ -2384,7 +2641,7 @@ function atk(){
   } else if(type==='flute_burst'){
     // Swashbuckler with flute — sonic burst ATK (shorter range than SKILL sonic)
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     GS.enemies.forEach(e=>{
       const dx=e.x-p.x,dy=e.y-p.y,dist=Math.hypot(dx,dy)||1;
       const dot=(dx/dist)*d[0]+(dy/dist)*d[1];
@@ -2401,7 +2658,7 @@ function atk(){
     // Herald Roland — fast fencing strike with lunge
     const lunge=TS*1.4;
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     // Step forward during lunge
     safeTeleport(p,d[0]*14,d[1]*14,4);
     GS.enemies.forEach(e=>{
@@ -2427,7 +2684,7 @@ function skill(){
   const p=GS.p;if(!p||p.abt>0)return;p.abt=120;
   if(p.id==='torvin'){GS.enemies.forEach(e=>{const d=Math.hypot(e.x-p.x,e.y-p.y)||1;safeEnemyPush(e,(e.x-p.x)/d*64,(e.y-p.y)/d*64);hitE(e,1);});burst(p.x,p.y,p.color,14);}
   else if(p.id==='aeryn'){const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];safeTeleport(p,d[0]*TS*2.5,d[1]*TS*2.5,10);burst(p.x,p.y,'#2ecc71',10);}
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];safeTeleport(p,d[0]*TS*2.5,d[1]*TS*2.5,10);burst(p.x,p.y,'#2ecc71',10);}
   else if(p.id==='roland'){p.hp=Math.min(p.maxHp,p.hp+1);burst(p.x,p.y,'#e67e22',12);}
   else if(p.id==='coren'){GS.enemies.forEach(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<TS*3.5)hitE(e,2);});burst(p.x,p.y,'#9b59b6',20);}
 }
@@ -2440,6 +2697,82 @@ function burst(x,y,color,n){
 }
 
 // ─── RENDER ───
+
+function renderCorenGlow(ctx, cx, cy){
+  if(!isNight()) return;
+  const alpha = getSkyAlpha();
+  if(alpha <= 0.1) return;
+
+  // Find Coren — either hero or NPC
+  let corenX=null, corenY=null;
+  if(_HERO&&_HERO.id==='coren'&&GS.p){ corenX=GS.p.x; corenY=GS.p.y; }
+  else { const cn=GS.npcs.find(n=>n.id==='coren'); if(cn){corenX=cn.x;corenY=cn.y;} }
+  if(corenX===null) return;
+
+  const r = getCorenLightRadius();
+  if(r <= 0) return;
+
+  const sx = corenX - cx, sy = corenY - cy;
+  const px = r * TS;
+
+  // Determine glow color by weapon type
+  const sec = LOADOUT.coren ? LOADOUT.coren.secondary : null;
+  const pri = LOADOUT.coren ? LOADOUT.coren.primary : null;
+  const hasOrb = sec==='coren_light_1'||sec==='coren_light_2';
+  const hasStaff = pri==='coren_staff_1'||pri==='coren_staff_2';
+
+  const glowColor = hasOrb ? '180,220,255' : hasStaff ? '160,120,255' : '120,80,220';
+  const glowAlpha = hasOrb ? 0.18 : hasStaff ? 0.12 : 0.08;
+  const flicker = hasOrb ? 1 : Math.sin(GS.fr*.07)*0.08+0.92;
+
+  ctx.save();
+  const grad = ctx.createRadialGradient(sx,sy,px*0.05,sx,sy,px);
+  grad.addColorStop(0, `rgba(${glowColor},${glowAlpha*flicker*alpha})`);
+  grad.addColorStop(0.5, `rgba(${glowColor},${glowAlpha*0.4*flicker*alpha})`);
+  grad.addColorStop(1, `rgba(${glowColor},0)`);
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(sx,sy,px,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function renderCandleGlow(ctx, cx, cy){
+  if(!isNight()) return;
+  const alpha = getSkyAlpha();
+  if(alpha <= 0) return;
+
+  const _w = (DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+  const _C = (DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+  const _R = (DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
+
+  // Visible tile range
+  const c0=Math.max(0,Math.floor(cx/TS)-1);
+  const c1=Math.min(_C-1,Math.ceil((cx+VW)/TS)+1);
+  const r0=Math.max(0,Math.floor(cy/TS)-1);
+  const r1=Math.min(_R-1,Math.ceil((cy+VH)/TS)+1);
+
+  for(let r=r0;r<=r1;r++){
+    for(let c=c0;c<=c1;c++){
+      const t=_w[r]?_w[r][c]:0;
+      if(t!==7) continue; // only table tiles
+      const x=c*TS-cx, y=r*TS-cy;
+      const flicker=Math.sin(GS.fr*.13+r*c)*.2+.8;
+      // Candle flame
+      ctx.save();
+      ctx.shadowColor=`rgba(255,200,60,${flicker})`;
+      ctx.shadowBlur=12*flicker;
+      ctx.fillStyle=`rgba(255,220,80,${0.9*flicker})`;
+      ctx.fillRect(x+TS/2-1,y+TS/3-10,2,4);
+      // Warm pool of light
+      const grad=ctx.createRadialGradient(x+TS/2,y+TS/3-8,0,x+TS/2,y+TS/3-8,TS*1.4);
+      grad.addColorStop(0,`rgba(255,180,60,${0.22*flicker*alpha})`);
+      grad.addColorStop(1,'rgba(255,100,0,0)');
+      ctx.fillStyle=grad;
+      ctx.fillRect(x-TS/2,y-TS/2,TS*2,TS*2);
+      ctx.restore();
+    }
+  }
+}
+
 function render(){
   const cv=document.getElementById('game-canvas');
   const ctx=cv.getContext('2d');
@@ -2449,6 +2782,10 @@ function render(){
 
   // Draw tiles
   drawWorld(ctx,cx,cy);
+
+  // Sky / time of day overlay
+  renderStars(ctx, VW, VH);
+  renderSky(ctx, VW, VH);
 
   // Particles under characters
   GS.particles.forEach(pt=>{
@@ -2647,15 +2984,17 @@ function render(){
 }
 
 function drawWorld(ctx,cx,cy){
-  // Visible tile range
+  const _w=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+  const _C=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+  const _R=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
   const c0=Math.max(0,Math.floor(cx/TS)-1);
-  const c1=Math.min(COLS-1,Math.ceil((cx+VW)/TS)+1);
+  const c1=Math.min(_C-1,Math.ceil((cx+VW)/TS)+1);
   const r0=Math.max(0,Math.floor(cy/TS)-1);
-  const r1=Math.min(ROWS-1,Math.ceil((cy+VH)/TS)+1);
+  const r1=Math.min(_R-1,Math.ceil((cy+VH)/TS)+1);
 
   for(let r=r0;r<=r1;r++){
     for(let c=c0;c<=c1;c++){
-      const t=WORLD[r][c];
+      const t=_w[r]?_w[r][c]:2;
       const x=c*TS-cx, y=r*TS-cy;
       drawTile(ctx,t,x,y,r,c);
     }
@@ -2755,6 +3094,13 @@ function drawTile(ctx,t,x,y,r,c){
     ctx.fillStyle='#c8860a';ctx.fillRect(x+TS/2-3,y+TS/2-5,6,10);
     ctx.beginPath();ctx.arc(x+TS/2,y+TS/2+5,4,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='#c8860a';ctx.lineWidth=2;ctx.strokeRect(x+4,y+4,TS-8,TS-8);
+    // Locked door indicator
+    if(typeof isDoorLocked==='function'&&isDoorLocked(r,c)){
+      ctx.fillStyle='#e74c3c';
+      ctx.beginPath();ctx.arc(x+TS/2,y+TS*0.3,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#c0392b';
+      ctx.fillRect(x+TS/2-4,y+TS*0.3,8,6);
+    }
   }
   else if(t===6){ // CHEST
     ctx.fillStyle='#1e1a14';ctx.fillRect(x,y,TS,TS);
@@ -2763,8 +3109,8 @@ function drawTile(ctx,t,x,y,r,c){
     ctx.fillStyle='#8a6a20';ctx.fillRect(x+8,y+12,TS-16,12);
     ctx.fillStyle='#c8860a';ctx.fillRect(x+8,y+22,TS-16,3);
     ctx.fillStyle='#f1c40f';ctx.fillRect(x+TS/2-4,y+18,8,6);
-    ctx.save();ctx.shadowColor='#c8860a';ctx.shadowBlur=14;
-    ctx.fillStyle='rgba(200,134,10,.12)';ctx.fillRect(x,y,TS,TS);ctx.restore();
+    ctx.save();ctx.shadowColor='#c8860a';ctx.shadowBlur=6;
+    ctx.fillStyle='rgba(200,134,10,.06)';ctx.fillRect(x,y,TS,TS);ctx.restore();
   }
   else if(t===7){ // TABLE
     ctx.fillStyle='#1e1a14';ctx.fillRect(x,y,TS,TS);
@@ -2773,11 +3119,21 @@ function drawTile(ctx,t,x,y,r,c){
     ctx.fillStyle='#6a4a1c';ctx.fillRect(x+6,y+TS/3+2,TS-12,TS/3-4);
     // Table legs
     ctx.fillStyle='#3a2408';ctx.fillRect(x+6,y+TS/3+TS/3,5,TS/3);ctx.fillRect(x+TS-11,y+TS/3+TS/3,5,TS/3);
-    // Items on table — mugs/candles
-    ctx.fillStyle='#8a6030';ctx.fillRect(x+TS/2-3,y+TS/3-8,6,8);
-    ctx.fillStyle='#f1c40f';ctx.fillRect(x+TS/2-1,y+TS/3-10,2,3);
+    // Items on table
+    if(isNight&&isNight()){
+      // Candle at night
+      ctx.fillStyle='#8a6030';ctx.fillRect(x+TS/2-3,y+TS/3-8,6,8);
+      ctx.fillStyle='#f1c40f';ctx.fillRect(x+TS/2-1,y+TS/3-10,2,3);
+      // (glow handled by renderCandleGlow pass after sky overlay)
+    } else {
+      // Daytime — just a mug on the table
+      ctx.fillStyle='#6a3a18';ctx.fillRect(x+TS/2-4,y+TS/3-6,8,7);
+      ctx.fillStyle='#8a5030';ctx.fillRect(x+TS/2-3,y+TS/3-5,6,5);
+    }
   }
   else if(t===9){ // STAIR / DUNGEON ENTRANCE
+    // Check if this stair leads to a locked dungeon
+    const _stairLocked = typeof isDoorLocked==='function' && isDoorLocked(r,c);
     ctx.fillStyle='#1a1410';ctx.fillRect(x,y,TS,TS);
     const sh=Math.floor(TS/5);
     for(let s=0;s<5;s++){
@@ -2909,12 +3265,21 @@ function dAeryn(ctx,x,y,f,af,w,h){
   else{ctx.fillRect(x+7,y+7,4,3);}
   ctx.fillStyle='#2ecc71';
   if(f===2){ctx.fillRect(x+11,y+7,2,2);ctx.fillRect(x+w-11,y+7,2,2);}
-  // Bow
-  ctx.fillStyle='#8B6914';ctx.fillRect(x+w+2,y+6,3,26);
-  ctx.strokeStyle='#6a4a10';ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.arc(x+w+3,y+19,12,Math.PI*.1,Math.PI*.9);ctx.stroke();
-  ctx.fillStyle='#aaaaaa';ctx.fillRect(x+w+2,y+2,2,10);
-  ctx.fillStyle='#c8a040';ctx.fillRect(x+w,y+2,5,4);
+  // Weapon — bow or dagger based on active weapon
+  if(typeof ACTIVE_WEAPON==='undefined'||ACTIVE_WEAPON.aeryn!=='secondary'){
+    // Bow (primary)
+    ctx.fillStyle='#8B6914';ctx.fillRect(x+w+2,y+6,3,26);
+    ctx.strokeStyle='#6a4a10';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(x+w+3,y+19,12,Math.PI*.1,Math.PI*.9);ctx.stroke();
+    ctx.fillStyle='#aaaaaa';ctx.fillRect(x+w+2,y+2,2,10);
+    ctx.fillStyle='#c8a040';ctx.fillRect(x+w,y+2,5,4);
+  } else {
+    // Dagger (secondary) — short blade held at side
+    ctx.fillStyle='#aaaaaa';ctx.fillRect(x+w+1,y+12,3,16);
+    ctx.fillStyle='#c8a040';ctx.fillRect(x+w-1,y+10,7,4);
+    ctx.fillStyle='#8B6914';ctx.fillRect(x+w+1,y+24,3,5);
+    ctx.fillStyle='#cccccc';ctx.fillRect(x+w+1,y+8,3,4);
+  }
 }
 
 function dRoland(ctx,x,y,f,af,w,h){
@@ -3141,7 +3506,7 @@ function dCoren(ctx,x,y,f,af,w,h){
     ctx.beginPath(); ctx.ellipse(x+w+12,y+18,orbR*1.2,orbR*.4,GS.fr*.05,0,Math.PI*2); ctx.stroke();
     ctx.restore(); ctx.shadowBlur=0;
     // Light cone — faint radiance forward
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0]}[f];
+    const _ls=.707;const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_ls,-_ls],5:[_ls,_ls],6:[-_ls,_ls],7:[-_ls,-_ls]}[f]||[0,-1];
     ctx.fillStyle=`rgba(200,230,255,${.06*lGlow})`;
     ctx.beginPath();
     ctx.moveTo(x+w+12,y+18);
@@ -3469,6 +3834,18 @@ function updateHUD(){
   let h='';for(let i=0;i<p.maxHp;i++)h+=i<p.hp?'\u2665':'\u2661';
   document.getElementById('hud-hearts').textContent=h;
   document.getElementById('hud-hearts').style.color=p.hp<=1?'#e74c3c':p.color;
+  // Time display
+  const timeEl=document.getElementById('hud-time');
+  if(timeEl&&typeof getTimeOfDay==='function'){
+    const t=isNaN(GS.tick)?0.25:getTimeOfDay();
+    const hours=Math.floor(t*24);
+    const mins=Math.floor((t*24-hours)*60);
+    const period=hours<12?'am':'pm';
+    const displayHour=hours===0?12:hours>12?hours-12:hours;
+    const timeOfDayName=hours<5?'Night':hours<8?'Dawn':hours<17?'Day':hours<20?'Dusk':'Night';
+    timeEl.textContent=`${displayHour}:${String(mins).padStart(2,'0')}${period} · ${timeOfDayName}`;
+    timeEl.style.color=isNight()?'#4a6a9a':isDusk()||isDawn()?'#c87020':'#6a8a4a';
+  }
   const goldEl=document.getElementById('hud-gold');
   if(goldEl) goldEl.textContent='🪙 '+ECONOMY.gold;
   drawMinimap();
@@ -3476,24 +3853,57 @@ function updateHUD(){
 
 function drawMinimap(){
   const mm=document.getElementById('minimap');
+  if(!mm) return;
   const ctx=mm.getContext('2d');
-  const mw=88,mh=88;
-  ctx.fillStyle='#000';ctx.fillRect(0,0,mw,mh);
-  const sc=mw/COLS;
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const t=WORLD[r][c];
-      const mc={0:'#1e3010',1:'#2a2018',2:'#0e0c0a',3:'#0a1828',4:'#0e1c08',5:'#5a3810',6:'#c8860a',7:'#3a2810',8:'#2a2218',9:'#8B6914'}[t]||'#111';
-      ctx.fillStyle=mc;
-      ctx.fillRect(c*(mw/COLS),r*(mh/ROWS),mw/COLS-0.5,mh/ROWS-0.5);
+  const mw=128, mh=110;
+  mm.width=mw; mm.height=mh;
+
+  const _mdata=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+  const _mC=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+  const _mR=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
+
+  // Dark background
+  ctx.fillStyle='#080808';
+  ctx.fillRect(0,0,mw,mh);
+
+  const tw=mw/_mC, th=mh/_mR;
+
+  for(let r=0;r<_mR;r++){
+    for(let c=0;c<_mC;c++){
+      const t=_mdata[r]?_mdata[r][c]:0;
+      // Only draw non-grass tiles — grass is the background
+      let col=null;
+      if(t===0) col='#2a4a18';         // grass — slightly lighter than bg
+      else if(t===1) col='#6a5040';    // floor
+      else if(t===2) col='#303030';    // wall
+      else if(t===3) col='#2a6090';    // shallow water
+      else if(t===4) col='#1a3010';    // tree — darker than grass
+      else if(t===5) col='#c87010';    // door — orange
+      else if(t===6) col='#e0b020';    // chest — gold
+      else if(t===7) col='#5a3820';    // table
+      else if(t===8) col='#a09050';    // road — tan
+      else if(t===9) col='#d0a020';    // stair
+      else if(t===10) col='#b0c8e0';   // snow
+      else if(t===11) col='#cc2000';   // lava
+      else if(t===12) col='#0a1860';   // deep water
+      if(col){
+        ctx.fillStyle=col;
+        ctx.fillRect(c*tw, r*th, Math.max(tw,1), Math.max(th,1));
+      }
     }
   }
+
   // Player dot
-  const p=GS.p;
-  if(p){
-    const px=(p.x/TS/COLS)*mw, py=(p.y/TS/ROWS)*mh;
-    ctx.save();ctx.shadowColor=_HERO.color;ctx.shadowBlur=4;
-    ctx.fillStyle=_HERO.color;ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();
+  if(GS.p&&_HERO){
+    const px=(GS.p.x/TS/_mC)*mw;
+    const py=(GS.p.y/TS/_mR)*mh;
+    ctx.save();
+    ctx.shadowColor=_HERO.color;
+    ctx.shadowBlur=6;
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=_HERO.color;
+    ctx.beginPath();ctx.arc(px,py,2,0,Math.PI*2);ctx.fill();
     ctx.restore();
   }
 }
@@ -3542,7 +3952,8 @@ const PARTY = {
   tools:       { torvin:null, aeryn:null, roland:'roland_map_1', coren:null },
   defaultSubs: { torvin:'warden', aeryn:'beastmaster', roland:'storyweaver', coren:'runewright' },
   knownSpells: [], // Coren's learned spells
-  eggRevealed: false, // Coren has told at least one party member
+  eggRevealed: false,
+  gearHistory: {torvin:{},aeryn:{},roland:{},coren:{}} // best tier ever equipped per slot
 };
 
 function getApproval(id){ return PARTY.approval[id]||50; }
@@ -4093,6 +4504,1408 @@ const EGG_REVEAL = {
   },
 };
 
+
+// ── WORLD NPC DIALOGUES ──
+const WORLD_DLG = {
+  harbormaster: {
+    color:'#4a90d9',
+    greeting:{ text:`"Port's been quiet. Too quiet. Used to get traders from the southern keeps."`,
+      subtext:`He doesn't look up from his ledger.`,
+      choices:[
+        { text:`"What happened to the trade?"`, reply:`"Keep closed. Road closed with it. Thirty years of silence."`, back:'investigate' },
+        { text:`"We're heading south."`, reply:`"Then you'll want the road, not the water. Storm season."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"You need something, say it. I don't run a gossip house."`,
+      choices:[
+        { text:`"Do you have a boat for hire?"`, reply:`"Captain Mira. Ship's at the far dock. She'll negotiate."`, back:'investigate' },
+        { text:`"What's on the water?"`, reply:`"Fish. Fog. Something that went down years back — sailors won't talk about it."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  ship_captain: {
+    color:'#2471a3',
+    greeting:{ text:`"You don't look like merchants."`,
+      subtext:`She's checking the rigging without looking at you.`,
+      choices:[
+        { text:`"We're not. We need passage."`, reply:`"To where?"`, back:'investigate' },
+        { text:`"We're headed to the keep."`, reply:`"By sea or by road?"`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"I've got one ship and I don't take passengers to places I won't come back from."`,
+      choices:[
+        { text:`"What's out there?"`, reply:`"Old cargo ship. Went down thirty years back. Same night the keep closed."`, subtext:`"No one talks about what was on it."`, back:'investigate' },
+        { text:`"We'll pay well."`, reply:`"Show me the coin first."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  hermit_elder: {
+    color:'#27ae60',
+    greeting:{ text:`"The forest knew you were coming. It knows most things."`,
+      subtext:`He's tending something low to the ground. You can't tell what.`,
+      choices:[
+        { text:`"We're looking for the Rootvault."`, reply:`"Of course you are."`, subtext:`He stands slowly. "Come inside."`, back:'investigate' },
+        { text:`"What do you tend here?"`, reply:`"Memory."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"The vault is old. Older than the keep. Older than this road. What grows there should not be disturbed."`,
+      choices:[
+        { text:`"What grows there?"`, reply:`"Something that remembers what the land was before men built on it."`, back:'investigate' },
+        { text:`"We need to go in."`, reply:`"I know. The egg makes it necessary."`, subtext:`He looks directly at Coren.`, delta_coren:+8, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  hermit_rune: {
+    color:'#8e44ad',
+    greeting:{ text:`"Runes don't lie. Yours say you've been here before. Or you will be."`,
+      choices:[
+        { text:`"That doesn't make sense."`, reply:`"Time rarely does this close to the vault."`, back:'investigate' },
+        { text:`"What can you read about the keep?"`, reply:`"Sealed by something from inside. Not locked. Sealed. There's a difference."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"The east wing resonance has been building for thirty years. Something is almost ready to hatch."`,
+      choices:[
+        { text:`"Hatch?"`, reply:`"Or wake. The language gets imprecise at that scale."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  village_elder: {
+    color:'#c8860a',
+    greeting:{ text:`"Another traveler on the south road. Haven't seen so many in thirty years."`,
+      subtext:`She's sitting by the well. She's been sitting there a long time.`,
+      choices:[
+        { text:`"What happened thirty years ago?"`, reply:`"The keep closed. The road went quiet. Half the village left."`, back:'investigate' },
+        { text:`"What do you know about the keep?"`, reply:`"More than I've told anyone. Sit down."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"There was a family. Researchers. They were studying something in the east wing when the gates closed. They were inside."`,
+      choices:[
+        { text:`"Do you know their name?"`, reply:`"Vaen. Aethori family. Scholars."`, subtext:`She watches Coren carefully.`, delta_coren:+10, back:'investigate' },
+        { text:`"Did anyone survive?"`, reply:`"One child was outside the walls when it happened. Six years old."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  gravedigger: {
+    color:'#636e72',
+    greeting:{ text:`"You're reading the stones. Most don't bother."`,
+      subtext:`He doesn't stop digging.`,
+      choices:[
+        { text:`"Who are they?"`, reply:`"Everybody. Soldiers, farmers, a few scholars. Some names match names inside the keep."`, back:'investigate' },
+        { text:`"What happened in the bonefields?"`, reply:`"Battle. Long before the keep closed. They never moved the dead."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"The catacombs run under the chapel. I've been down twice. I won't go again."`,
+      choices:[
+        { text:`"What did you find?"`, reply:`"The names on the stones. Written again, on the walls inside."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  lost_priest: {
+    color:'#dfe6e9',
+    greeting:{ text:`"I buried my faith somewhere in this field. I'm still looking for it."`,
+      subtext:`He's kneeling in the grass between the graves.`,
+      choices:[
+        { text:`"What happened to your faith?"`, reply:`"I prayed for the keep to open. Thirty years later it did. Now I'm not sure what I prayed to."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"The chapel has a way down. The door is in the altar floor. I haven't opened it."`,
+      choices:[
+        { text:`"Why not?"`, reply:`"Because I know what's down there remembers me."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  dwarf_brokk: {
+    color:'#7f8c8d',
+    greeting:{ text:`"You're not dwarves. You're going to the keep anyway, aren't you."`,
+      subtext:`Not a question. He stamps his feet against the cold.`,
+      choices:[
+        { text:`"You know the keep?"`, reply:`"Built half of it. The lower halls — that's dwarven work."`, back:'investigate' },
+        { text:`"What happened underground?"`, reply:`"The third vault collapsed. Thirty years ago. Same night."`, delta_torvin:+8, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"The Frost Vaults behind us — those are ours. Something got in when the keep sealed. We don't go back."`,
+      choices:[
+        { text:`"What got in?"`, reply:`"Don't know. Cold. Wrong kind of cold."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  soldier_kael: {
+    color:'#95a5a6',
+    greeting:{ text:`"Hold. Road's open but I'd know your business."`,
+      choices:[
+        { text:`"We're headed south. To the keep."`, reply:`"Gate's been open three days. You're the fourth group."`, subtext:`"None of the first three came back north."`, back:'investigate' },
+        { text:`"What are you watching for?"`, reply:`"Something's been moving along the ridge. Not animals."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"The ridge used to be sealed. Dragon's Spine, they call it. Something's been opening the old vents."`,
+      choices:[
+        { text:`"Fire sprites?"`, reply:`"Bigger. And organized."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  miller_widow: {
+    color:'#e67e22',
+    greeting:{ text:`"My husband ran this mill for twenty years. Stopped the day the keep closed. Never explained why."`,
+      choices:[
+        { text:`"What do you think happened?"`, reply:`"He heard something. In the water. Said the lake had a voice that night."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"There's an island in the lake. Bram won't take his boat near it anymore. Says the water there doesn't move right."`,
+      choices:[
+        { text:`"What's on the island?"`, reply:`"Used to be a keep annex. Library, I think. It sank. Or something pulled it."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  farmhand: {
+    color:'#f1c40f',
+    greeting:{ text:`"Mind the south field. The slimes come up through the irrigation ditches when it rains."`,
+      choices:[
+        { text:`"Where do they come from?"`, reply:`"Cellar under the old barn. Something's down there. We don't open it."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"The barn floor's been warm for three years. Started the same time as the keep troubles."`,
+      choices:[
+        { text:`"Warm how?"`, reply:`"Like something's breathing under it."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  merchant_camp:{ color:'#f39c12',
+    greeting:{ text:`"Best prices between here and the coast. What do you need?"`,
+      choices:[
+        { text:`"What are you selling?"`, reply:`"Draughts, antitoxin, a map fragment I can't read."`, back:'investigate' },
+        { text:`"Have you been to the keep?"`, reply:`"Close enough. Turned around when I saw the gate was open."`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"The standing stones here — they hum at night. I've stopped camping near them."`,
+      choices:[
+        { text:`"What kind of hum?"`, reply:`"Harmonic. Like someone tuning an instrument underground."`, delta_roland:+6, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  fisherman:{ color:'#3498db',
+    greeting:{ text:`"Lake's been cold since last week. Colder than it should be."`,
+      choices:[
+        { text:`"What changed?"`, reply:`"The island. It used to be just ruins. Now there's light in it at night."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"I won't take my boat past the shallow shelf. Not since the keep opened."`,
+      choices:[
+        { text:`"Will you take us?"`, reply:`"Not past the shelf. But I'll get you close enough to wade."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  hermit_herb:{ color:'#2ecc71',
+    greeting:{ text:`"You smell like the road. The road south."`,
+      choices:[
+        { text:`"We're heading to the keep."`, reply:`"Take dried root. The lower levels cause disorientation. This helps."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"The vault below the forest — I leave offerings at the entrance. Something accepts them."`,
+      choices:[
+        { text:`"What kind of offerings?"`, reply:`"Bone and fruit. Old trade. Don't ask how old."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  hermit_watcher:{ color:'#7f8c8d',
+    greeting:{ text:`"..."`,
+      subtext:`He's watching the south. He doesn't turn.`,
+      choices:[
+        { text:`"What are you watching?"`, reply:`"The gate. I've been watching it for thirty years."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"It opened on a Tuesday. I wrote it down. I write everything down."`,
+      choices:[
+        { text:`"Can we see your records?"`, reply:`"No."`, back:'investigate' },
+        { text:`"Why not?"`, reply:`"Because what's written comes true. I'm still checking."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  soldier_tam:{ color:'#7f8c8d',
+    greeting:{ text:`"Kael says let you pass. I say we don't know what you're bringing back."`,
+      choices:[
+        { text:`"We're not bringing anything back."`, reply:`"That's what the last group said."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"Been posted here two months. First three weeks nothing. Then the gate opened and everything changed."`,
+      choices:[
+        { text:`"How did it change?"`, reply:`"Sounds. At night. From underground. Not just the keep — everywhere."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  dwarf_dagni:{ color:'#95a5a6',
+    greeting:{ text:`"Brokk talks too much. I'll say this once: the frost vaults are sealed for a reason."`,
+      choices:[
+        { text:`"What reason?"`, reply:`"The last thing Brokk's father sealed in there is still alive."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    },
+    investigate:{ text:`"Whatever's in there has been there since before the keep was built. The keep was built to keep people away from it."`,
+      choices:[
+        { text:`"Not the other way around?"`, reply:`"No."`, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+// DUNGEON SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+// Current dungeon state
+let DUNGEON = null; // null = overworld
+let DUNGEON_WORLD = null;
+let DUNGEON_COLS = 0;
+let DUNGEON_ROWS = 0;
+let _overworld_state = null; // saved when entering dungeon
+let _dungeon_fade = 0; // 0-1 fade transition
+let _dungeon_fading = false;
+let _dungeon_fade_dir = 1; // 1=fade out, -1=fade in
+let _dungeon_fade_cb = null;
+
+// Cleared rooms tracker per dungeon
+const CLEARED_ROOMS = {};
+
+// Darkness radius (tiles)
+const DARK_RADIUS_NORMAL = 4.5;
+const DARK_RADIUS_MAGELIGHT = 7.5;
+
+function getDarkRadius(){
+  if(!DUNGEON) return 999; // overworld — handled by getNightLightRadius
+  // In dungeons — use Coren's weapon radius or base
+  const corenR = getCorenLightRadius();
+  if(corenR >= 9) return DARK_RADIUS_MAGELIGHT; // orb
+  if(corenR >= 4) return (DARK_RADIUS_NORMAL+DARK_RADIUS_MAGELIGHT)/2; // staff
+  return DARK_RADIUS_NORMAL; // wands or nothing
+}
+
+// ── Fade transition ──
+function startFade(dir, cb){
+  _dungeon_fading = true;
+  _dungeon_fade_dir = dir;
+  if(dir===1) _dungeon_fade=0;
+  else _dungeon_fade=1;
+  _dungeon_fade_cb = cb;
+}
+
+function updateFade(dt){
+  if(!_dungeon_fading) return;
+  _dungeon_fade += _dungeon_fade_dir * dt * 0.08;
+  if(_dungeon_fade_dir===1 && _dungeon_fade>=1){
+    _dungeon_fade=1; _dungeon_fading=false;
+    if(_dungeon_fade_cb){ _dungeon_fade_cb(); _dungeon_fade_cb=null; }
+  } else if(_dungeon_fade_dir===-1 && _dungeon_fade<=0){
+    _dungeon_fade=0; _dungeon_fading=false;
+    if(_dungeon_fade_cb){ _dungeon_fade_cb(); _dungeon_fade_cb=null; }
+  }
+}
+
+function renderFade(ctx, VW, VH){
+  if(_dungeon_fade<=0) return;
+  ctx.fillStyle=`rgba(0,0,0,${_dungeon_fade})`;
+  ctx.fillRect(0,0,VW,VH);
+}
+
+// ── Enter dungeon ──
+function enterDungeon(dungeonId){
+  const def = DUNGEONS[dungeonId];
+  if(!def||!def.cols){
+    // Dungeon entrance exists but interior not yet built
+    showDungeonTitle('Sealed', 'This entrance is impassable.');
+    showBuyFlash('The way is sealed. Perhaps later.');
+    return;
+  }
+  _overworld_state = {
+    px: GS.p.x, py: GS.p.y,
+    enemies: GS.enemies.slice(),
+    npcs: GS.npcs.slice()
+  };
+  startFade(1, ()=>{
+    DUNGEON = dungeonId;
+    DUNGEON_WORLD = def.buildWorld();
+    DUNGEON_COLS = def.cols;
+    DUNGEON_ROWS = def.rows;
+    GS.p.x = def.spawnX * TS + TS/2;
+    GS.p.y = def.spawnY * TS + TS/2;
+    GS.enemies = def.enemies ? def.enemies.map(e=>({...e})) : [];
+    GS.npcs = GS.npcs.filter(n=>n._party);
+    // Initialize gear history from starting loadouts so returning old gear gives no approval
+    ['torvin','aeryn','roland','coren'].forEach(charId=>{
+      if(!PARTY.gearHistory[charId]) PARTY.gearHistory[charId]={};
+      // Ensure Coren always has light orb available regardless of subclass
+      if(charId==='coren') ECONOMY.owned['coren_light_1']=true;
+      const L=LOADOUT[charId];
+      if(!L) return;
+      ['primary','secondary'].forEach(slot=>{
+        const item=CATALOGUE[L[slot]];
+        if(item) PARTY.gearHistory[charId][slot]=item.tier||1;
+      });
+    });
+    showDungeonTitle(def.name, def.subtitle);
+    GS.cam.x = GS.p.x - VW/2;
+    GS.cam.y = GS.p.y - VH/2;
+    if(dungeonId==='catacombs'){
+      changeApproval('torvin', +5);
+      if(_HERO&&_HERO.id!=='torvin')
+        setTimeout(()=>showBuyFlash('Torvin nods as you descend.'), 3500);
+    }
+    startFade(-1, null);
+  });
+}
+
+function exitDungeon(){
+  if(!_overworld_state) return;
+  startFade(1, ()=>{
+    DUNGEON = null; DUNGEON_WORLD = null;
+    const s = _overworld_state;
+    GS.p.x = s.px; GS.p.y = s.py;
+    GS.enemies = s.enemies; GS.npcs = s.npcs;
+    _overworld_state = null;
+    GS.cam.x = GS.p.x - VW/2;
+    GS.cam.y = GS.p.y - VH/2;
+    startFade(-1, null);
+  });
+}
+
+// ── Current world accessors ──
+function currentWorld(){ return DUNGEON ? DUNGEON_WORLD : WORLD; }
+function currentCOLS(){ return DUNGEON ? DUNGEON_COLS : COLS; }
+function currentROWS(){ return DUNGEON ? DUNGEON_ROWS : ROWS; }
+
+function dungeonSolidAt(wx,wy){
+  const w=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_WORLD:WORLD;
+  const _dc=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_COLS:COLS;
+  const _dr=(DUNGEON&&DUNGEON_WORLD)?DUNGEON_ROWS:ROWS;
+  const c=Math.floor(wx/TS), r=Math.floor(wy/TS);
+  if(r<0||r>=_dr||c<0||c>=_dc) return true;
+  const t=w[r][c];
+  return t===2||t===4||t===7||t===11||
+    (t===6&&!(typeof openedChests!=='undefined'&&openedChests.has(r+','+c)));
+}
+
+// ── Dungeon title card ──
+function showDungeonTitle(name, subtitle){
+  const el = document.getElementById('dungeon-title');
+  if(!el) return;
+  el.querySelector('.dt-name').textContent = name;
+  el.querySelector('.dt-sub').textContent = subtitle||'';
+  el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'), 3000);
+}
+
+// ── Stair detection in update ──
+function checkStairs(){
+  if(!GS.p) return;
+  const w = currentWorld();
+  const pc=Math.floor(GS.p.x/TS), pr=Math.floor(GS.p.y/TS);
+  if(pr<0||pr>=currentROWS()||pc<0||pc>=currentCOLS()) return;
+  const t = w[pr][pc];
+  if(t!==9) return;
+  if(_dungeon_fading) return;
+
+  if(DUNGEON){
+    // On exit stair — go back up
+    exitDungeon();
+  } else {
+    // On entrance stair — find which dungeon
+    const entry = findDungeonEntry(pr, pc);
+    if(entry) enterDungeon(entry);
+  }
+}
+
+function findDungeonEntry(r, c){
+  // Map stair positions to dungeon IDs
+  const STAIR_MAP = {
+    '25,17':'catacombs','25,18':'catacombs', // sw_bonefields region
+    '92,10':'catacombs','92,11':'catacombs', // center region
+    '148,57':'shattered_keep','148,58':'shattered_keep','148,59':'shattered_keep', // south region keep
+    '132,83':'keep_east_wing','132,84':'keep_east_wing', // south region east wing
+    '13,11':'rootvault','13,12':'rootvault','13,13':'rootvault', // rootvault_region
+    '51,31':'rootvault','51,32':'rootvault', // center region
+    '47,101':'drowned_archive','47,102':'drowned_archive','47,103':'drowned_archive', // drowned_region
+    '25,73':'saltmine','25,74':'saltmine','25,75':'saltmine', // se_farmlands
+    '22,74':'hollow_stones','22,75':'hollow_stones',
+    '31,112':'drowned_archive','31,113':'drowned_archive',
+    '89,118':'ember_vault','89,119':'ember_vault',
+    '82,89':'saltmine','82,90':'saltmine',
+    '64,8':'frost_vaults','64,9':'frost_vaults','64,10':'frost_vaults',
+    '152,57':'shattered_keep','152,58':'shattered_keep','152,59':'shattered_keep',
+    '148,71':'keep_east_wing','148,72':'keep_east_wing',
+  };
+  return STAIR_MAP[r+','+c]||null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// THE CATACOMBS — first dungeon
+// Beneath the collapsed chapel, Southwest Bonefields
+// Theme: death, remembrance, the names on the walls
+// ═══════════════════════════════════════════════════════════════
+
+const DUNGEONS = {
+  catacombs: {
+    name: 'The Catacombs',
+    subtitle: 'Beneath the Chapel',
+    cols: 40,
+    rows: 50,
+    spawnX: 19, spawnY: 2, // top center — entry from above
+    enemies: [
+      // Floor 1 — entry hall
+      {type:'skeleton',x:10*64+32,y:10*64+32,hp:5,mhp:5,dmg:2,spd:1.3,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:28*64+32,y:10*64+32,hp:5,mhp:5,dmg:2,spd:1.3,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // Floor 2 — corridor
+      {type:'skeleton',x:8*64+32,y:24*64+32,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:19*64+32,y:22*64+32,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:30*64+32,y:25*64+32,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:12*64+32,y:30*64+32,hp:7,mhp:7,dmg:2,spd:1.5,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // Floor 3 — the name chamber
+      {type:'skeleton',x:15*64+32,y:40*64+32,hp:8,mhp:8,dmg:3,spd:1.5,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:23*64+32,y:42*64+32,hp:8,mhp:8,dmg:3,spd:1.5,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:19*64+32,y:45*64+32,hp:10,mhp:10,dmg:4,spd:1.6,sz:20,ar:28,color:'#2c3e50',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // guardian
+    ],
+    buildWorld(){
+      const DCOLS=40, DROWS=50;
+      const g=[];
+      for(let r=0;r<DROWS;r++){ g.push([]); for(let c=0;c<DCOLS;c++) g[r].push(2); } // all walls
+
+      function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=t; }
+      function room(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); }
+      function corridor(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); }
+      function t(r,c,tile){ if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=tile; }
+
+      // ── FLOOR 1: ENTRY HALL (rows 0-14) ──
+      // Entry stairs
+      room(0,17,2,22);
+      t(1,19,9); t(1,20,9); // exit stairs back up
+
+      // Entry hall — wide vaulted room
+      room(3,5,13,34);
+      // Pillars
+      t(5,8,2);t(5,9,2);t(6,8,2);
+      t(5,29,2);t(5,30,2);t(6,30,2);
+      t(11,8,2);t(11,9,2);t(10,8,2);
+      t(11,29,2);t(11,30,2);t(10,30,2);
+
+      // Lore object — inscription on north wall
+      t(4,19,7); // "table" = readable inscription
+
+      // First chest (safe loot)
+      t(12,7,6);
+      t(12,32,6);
+
+      // Exit south — corridor to floor 2
+      corridor(13,18,16,21);
+
+      // ── FLOOR 2: THE CORRIDORS (rows 15-32) ──
+      // West wing
+      room(17,3,26,16);
+      t(20,4,7); // resting bench
+      t(25,14,6); // hidden chest
+      // Alcoves with graves
+      t(18,3,2);t(19,3,2);t(20,3,2); // sealed alcove
+      t(22,3,2);t(23,3,2); // sealed alcove
+
+      // Central corridor — long and dark
+      corridor(17,17,32,22);
+      // Torches (table tiles as sconces)
+      t(19,17,7);t(23,17,7);t(27,17,7);t(31,17,7);
+
+      // East wing
+      room(17,23,26,36);
+      t(20,35,6); // chest
+      t(24,24,2);t(24,25,2); // collapsed section
+      t(24,30,2);t(24,31,2);
+
+      // East wing secret room
+      room(22,37,28,39);
+      t(25,38,6); // secret chest — good loot
+
+      // False altar room (trap)
+      room(17,3,20,10);
+      t(18,6,7); // false altar — triggers skeletons
+
+      // Stairs down to floor 3
+      corridor(31,18,35,21);
+      t(33,19,9);t(33,20,9);
+
+      // ── FLOOR 3: THE NAME CHAMBER (rows 34-49) ──
+      // Approach corridor
+      corridor(35,17,39,22);
+
+      // Antechamber
+      room(39,10,44,29);
+      t(40,19,7); // inscription: names begin here
+      t(40,20,7);
+      t(43,11,6); t(43,27,6); // flanking chests
+
+      // THE NAME CHAMBER — the reason you came
+      room(44,7,49,32);
+      // Wall inscriptions (table tiles along walls)
+      for(let c=8;c<=31;c+=2) t(45,c,7); // north wall names
+      for(let c=8;c<=31;c+=2) t(48,c,7); // south wall names
+      for(let r=45;r<=48;r++) t(r,8,7);  // west wall names
+      for(let r=45;r<=48;r++) t(r,31,7); // east wall names
+
+      // Central altar — the revelation
+      t(46,19,7);t(46,20,7);
+      t(47,19,7);t(47,20,7);
+
+      // VAEN name chest — story payload
+      t(48,19,6); // opening this triggers the Vaen revelation
+
+      // Exit — tunnel back up (shortcut)
+      room(44,0,49,6);
+      t(46,1,9);t(47,1,9); // shortcut exit stairs
+
+      return g;
+    }
+  },
+
+  // Placeholder entries for other dungeons (no buildWorld yet)
+  rootvault:{ name:'The Rootvault', subtitle:'Ancient Growth', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  hollow_stones:{ name:'The Hollow Stones', subtitle:'Beneath the Moor', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  drowned_archive:{ name:'The Drowned Archive', subtitle:'Cold Preservation', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  ember_vault:{ name:'The Ember Vault', subtitle:'The Forge Below', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  saltmine:{ name:'The Saltmine', subtitle:'Dwarven Deep', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  frost_vaults:{ name:'The Frost Vaults', subtitle:'Sealed and Cold', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  shattered_keep:{ name:'The Shattered Keep', subtitle:'The Long Silence Ends', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  keep_east_wing:{ name:'The East Wing', subtitle:'The Vaen Breach', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+};
+
+// ── Dungeon chest special events ──
+function innChestEvent(r, c){
+  // Inn chests — col 76 or col 81, rows 65-66
+  if(DUNGEON) return;
+  const regionId = getRegionId(REGION_X, REGION_Y);
+  if(regionId !== 'center') return;
+  // Either inn chest gives the catacombs key (only once)
+  if((r===66&&(c===76||c===81)) && !(INVENTORY['key_catacombs']>0)){
+    INVENTORY['key_catacombs'] = 1;
+    const item = KEY_ITEMS['key_catacombs'];
+    setTimeout(()=>{
+      showBuyFlash('Found: 🗝️ '+item.name);
+      showQuestNotif({
+        title: item.name,
+        hint: 'An old key. The innkeeper left it. It opens something under the chapel — if you can find the chapel.'
+      });
+    }, 400);
+  }
+}
+
+function dungeonChestEvent(r, c){
+  if(!DUNGEON) return;
+  // Catacombs progression key — exit shortcut chest at row46,col1
+  if(DUNGEON==='catacombs' && r===47 && c===1){
+    giveProgressionKey('catacombs');
+  }
+  // The Vaen revelation — name chamber altar chest
+  if(DUNGEON==='catacombs' && r===48 && c===19){
+    setTimeout(()=>{
+      showQuestNotif({
+        title:'The Vaen Name',
+        hint:'Among the names carved into the chamber wall — VAEN. An Aethori family. Researchers. They were inside when the keep closed.'
+      });
+      changeApproval('coren', +15);
+      if(_HERO&&_HERO.id==='coren'){
+        showBuyFlash('The name. Your name. Carved here.');
+      }
+    }, 800);
+  }
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// REGION SYSTEM — 3×3 grid, center is Vaelthar's Crossing
+// Cardinal directions extend the world, diagonal corners = dungeons
+//
+//  [NW:Rootvault]  [N:Sea Coast+Greyport]  [NE:Drowned Archive]
+//  [W:Frozen    ]  [C:Vaelthar's Cross  ]  [E:Ash Plains      ]
+//  [SW:Catacombs]  [S:Duskroad+Keep     ]  [SE:Saltmine       ]
+// ═══════════════════════════════════════════════════════════════
+
+// Current region coordinates in the 3×3 grid (col, row) — center = (1,1)
+let REGION_X = 1, REGION_Y = 1;
+let _regionTransitioning = false;
+
+// Edge detection — how close to edge triggers transition (in tiles)
+const REGION_EDGE = 2;
+
+function checkRegionEdge(){
+  if(!GS.p || _regionTransitioning || _dungeon_fading) return;
+  const px = Math.floor(GS.p.x/TS);
+  const py = Math.floor(GS.p.y/TS);
+  const cols = DUNGEON ? DUNGEON_COLS : COLS;
+  const rows = DUNGEON ? DUNGEON_ROWS : ROWS;
+  if(DUNGEON) return; // no region transitions inside dungeons
+
+  let dx=0, dy=0;
+  if(px <= REGION_EDGE)            { dx=-1; }
+  else if(px >= cols-REGION_EDGE-1){ dx=+1; }
+  if(py <= REGION_EDGE)            { dy=-1; }
+  else if(py >= rows-REGION_EDGE-1){ dy=+1; }
+
+  if(dx===0 && dy===0) return;
+
+  const nx = REGION_X + dx;
+  const ny = REGION_Y + dy;
+  if(nx<0||nx>2||ny<0||ny>2) return; // world boundary
+
+  // Check if destination region has content
+  const regionId = getRegionId(nx, ny);
+  if(!regionId) return;
+
+  travelToRegion(nx, ny, dx, dy);
+}
+
+function getRegionId(rx, ry){
+  const map = {
+    '0,0':'rootvault_region',
+    '1,0':'north_coast',
+    '2,0':'drowned_region',
+    '0,1':'west_frozen',
+    '1,1':'center', // current
+    '2,1':'east_ash',
+    '0,2':'sw_bonefields',
+    '1,2':'south_duskroad',
+    '2,2':'se_farmlands',
+  };
+  return map[rx+','+ry]||null;
+}
+
+function travelToRegion(nx, ny, dx, dy){
+  _regionTransitioning = true;
+  startFade(1, ()=>{
+    const regionId = getRegionId(nx, ny);
+    const regionDef = REGIONS[regionId];
+    if(!regionDef){ _regionTransitioning=false; startFade(-1,null); return; }
+
+    REGION_X = nx; REGION_Y = ny;
+
+    // Build new world
+    const newWorld = regionDef.buildWorld();
+    // Swap WORLD — reassign the global
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) WORLD[r][c]=newWorld[r]?newWorld[r][c]||0:0;
+
+    // Place player at opposite edge
+    if(dx===1)  GS.p.x = (REGION_EDGE+1)*TS+TS/2;        // came from west, place east→west entry
+    if(dx===-1) GS.p.x = (COLS-REGION_EDGE-2)*TS+TS/2;   // came from east
+    if(dy===1)  GS.p.y = (REGION_EDGE+1)*TS+TS/2;
+    if(dy===-1) GS.p.y = (ROWS-REGION_EDGE-2)*TS+TS/2;
+    // Keep perpendicular position
+    if(dx!==0 && dy===0){ /* keep py */ }
+    if(dy!==0 && dx===0){ /* keep px */ }
+
+    // Spawn region enemies — fresh set for this region
+    GS.enemies = regionDef.enemies ? regionDef.enemies.map(e=>({...e})) : [];
+    // Clear ALL npcs — party stays at inn, world NPCs replaced by region NPCs
+    GS.npcs = [];
+    // Returning to center — restore party + center world NPCs
+    if(regionId==='center'){
+      GS.npcs=[];
+      spawnNPCs(); // re-adds party members
+      // Add center world NPCs
+      if(regionDef.npcs){
+        regionDef.npcs.forEach(n=>{
+          GS.npcs.push({
+            id:n.id,name:n.name,icon:n.icon||'?',color:n.color||'#888',
+            x:n.x,y:n.y,facing:n.facing||2,
+            hp:5,mhp:5,sz:20,spd:0,af:0,at_:0,
+            _home:{x:n.x,y:n.y,facing:n.facing||2},
+            _worldNPC:true,dlg:n.dlg
+          });
+        });
+      }
+      _regionTransitioning=false;
+      startFade(-1,null);
+      return;
+    }
+    if(regionDef.npcs){
+      regionDef.npcs.forEach(n=>{
+        GS.npcs.push({
+          id:n.id, name:n.name, icon:n.icon||'?', color:n.color||'#888',
+          x:n.x, y:n.y, facing:n.facing||2,
+          hp:5, mhp:5, sz:20, spd:0, af:0, at_:0,
+          _home:{x:n.x,y:n.y,facing:n.facing||2},
+          _worldNPC:true, dlg:n.dlg
+        });
+      });
+    }
+
+    GS.cam.x = GS.p.x - VW/2;
+    GS.cam.y = GS.p.y - VH/2;
+
+    // Show region name
+    if(regionDef.name) showDungeonTitle(regionDef.name, regionDef.subtitle||'');
+
+    _regionTransitioning = false;
+    startFade(-1, null);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REGION DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+const REGIONS = {
+
+  center: {
+    name:'', enemies:[],
+    buildWorld(){ return mkWorld(); },
+    npcs:[ // non-party village NPCs for center
+      {id:'village_elder',name:'Elder Hosta',icon:'🏠',color:'#c8860a',x:51*64+32,y:78*64+32,facing:2,dlg:'village_elder'},
+      {id:'healer',name:'Senna',icon:'💊',color:'#e74c3c',x:66*64+32,y:78*64+32,facing:2,dlg:'healer'},
+      {id:'merchant_camp',name:'Davan the Trader',icon:'💰',color:'#f39c12',x:62*64+32,y:26*64+32,facing:2,dlg:'merchant_camp'},
+    ]
+  },
+
+  // ── NORTH — SEA COAST & GREYPORT ──
+  north_coast: {
+    name: "The Sea Coast", subtitle: "Greyport lies ahead",
+    npcs:[
+      {id:'harbormaster',name:'Harbormaster Voss',icon:'⚓',color:'#4a90d9',x:56*64,y:56*64,facing:2,dlg:'harbormaster'},
+      {id:'ship_captain',name:'Captain Mira',icon:'🚢',color:'#2471a3',x:87*64,y:56*64,facing:2,dlg:'ship_captain'},
+      {id:'fishmonger',name:'Old Pett',icon:'🐟',color:'#5d6d7e',x:98*64,y:55*64,facing:2,dlg:'fishmonger'},
+    ],
+    enemies:[
+      {type:'skeleton',x:40*64,y:80*64,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:80*64,y:80*64,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Deep ocean at top
+      rect(0,0,20,127,12);
+      // Shallow coast
+      rect(21,0,30,127,3);
+      // Beach/cliff
+      for(let c=0;c<128;c++){g[31][c]=2;g[32][c]=0;}
+      // Coastal road
+      for(let c=0;c<128;c++){g[33][c]=8;g[34][c]=8;}
+      // GREYPORT — cols 70-110
+      rect(35,70,80,110,0);
+      // Harbor (shallow)
+      rect(35,75,50,108,3);
+      // Dock boardwalk
+      for(let c=75;c<=108;c++){g[50][c]=8;}
+      for(let c=78;c<=106;c+=4){if(g[49][c]===3)g[49][c]=2;}
+      // Harbormaster's office
+      walls(52,72,60,80); g[60][76]=5; g[54][74]=7; g[56][74]=6;
+      // Ship captain
+      walls(52,83,60,91); g[60][87]=5; g[54][86]=7; g[57][89]=6;
+      // Fish market
+      walls(52,94,58,102); g[58][98]=5; g[54][96]=7; g[54][100]=7;
+      // Sailor's inn
+      walls(62,72,72,84); g[72][78]=5; g[65][74]=7; g[65][81]=7; g[69][74]=6;
+      // Chandler
+      walls(62,87,70,96); g[70][91]=5; g[65][89]=7; g[68][94]=6;
+      // Boats at dock
+      g[48][80]=6; g[48][87]=6; g[48][94]=6; g[46][85]=6;
+      // Road south (connects back to center region)
+      for(let r=33;r<ROWS;r++){g[r][58]=8;g[r][59]=8;g[r][60]=8;}
+      // Trees scattered
+      [[36,40],[37,50],[38,30],[40,55],[42,45],[45,35],[80,40],[90,55],[100,30]].forEach(([r,c])=>{
+        if(g[r][c]===0)g[r][c]=4;
+      });
+      return g;
+    }
+  },
+
+  // ── WEST — FROZEN FOOTHILLS ──
+  west_frozen: {
+    name: "The Frozen Foothills", subtitle: "Cold deepens",
+    npcs:[
+      {id:'dwarf_1',name:'Brokk Ironfoot',icon:'⛏️',color:'#7f8c8d',x:105*64,y:59*64,facing:1,dlg:'dwarf_brokk'},
+      {id:'dwarf_2',name:'Dagni',icon:'🔨',color:'#95a5a6',x:100*64,y:84*64,facing:1,dlg:'dwarf_dagni'},
+    ],
+    enemies:[
+      {type:'skeleton',x:80*64,y:60*64,hp:5,mhp:5,dmg:2,spd:1.3,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:100*64,y:80*64,hp:5,mhp:5,dmg:2,spd:1.3,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:90*64,y:100*64,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(10);} // all snow
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Ice patches
+      for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(Math.random()<0.12) g[r][c]=3;
+      // Dwarven road east-west
+      for(let c=0;c<128;c++){g[72][c]=8;g[73][c]=8;}
+      // Road south connects to center
+      for(let r=0;r<ROWS;r++){g[r][58]=8;g[r][59]=8;g[r][60]=8;}
+      // Dwarven outpost 1
+      walls(55,100,63,110); g[63][105]=5; g[57][102]=7; g[57][108]=7; g[61][108]=6;
+      // Dwarven outpost 2
+      walls(80,95,88,105); g[88][100]=5; g[82][97]=7; g[82][103]=7; g[86][103]=6;
+      // Frost cave entrance (NW corner dungeon access)
+      walls(20,10,30,22); g[30][16]=5; g[24][14]=9; g[24][15]=9; g[24][16]=9; g[25][18]=6;
+      // Frozen river
+      rect(100,0,104,127,3);
+      // Scattered frozen trees
+      [[40,30],[42,50],[45,80],[60,40],[65,90],[70,110],[90,25],[95,60],[110,45]].forEach(([r,c])=>{
+        if(g[r][c]===10)g[r][c]=4;
+      });
+      return g;
+    }
+  },
+
+  // ── EAST — ASH PLAINS ──
+  east_ash: {
+    name: "The Ash Plains", subtitle: "The Dragon's Spine",
+    npcs:[
+      {id:'soldier_1',name:'Sergeant Kael',icon:'⚔️',color:'#95a5a6',x:25*64,y:59*64,facing:3,dlg:'soldier_kael'},
+      {id:'soldier_2',name:'Private Tam',icon:'🛡️',color:'#7f8c8d',x:35*64,y:84*64,facing:3,dlg:'soldier_tam'},
+    ],
+    enemies:[
+      {type:'skeleton',x:30*64,y:60*64,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:50*64,y:80*64,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:30*64,y:100*64,hp:7,mhp:7,dmg:3,spd:1.6,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:60*64,y:110*64,hp:7,mhp:7,dmg:3,spd:1.6,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Dragon's Spine — east wall
+      for(let r=0;r<ROWS;r++) for(let c=110;c<128;c++) g[r][c]=2;
+      // Lava vents
+      rect(40,90,44,96,11); rect(70,100,74,106,11); rect(100,85,104,91,11);
+      // Volcanic rocks
+      [[30,50],[31,52],[32,51],[50,70],[51,72],[60,80],[61,78],[80,60],[81,62],[90,90],[91,88]].forEach(([r,c])=>{ if(r<ROWS&&c<COLS)g[r][c]=2; });
+      // Road west connects to center
+      for(let r=0;r<ROWS;r++){g[r][58]=8;g[r][59]=8;g[r][60]=8;}
+      // East road
+      for(let c=0;c<110;c++){g[72][c]=8;g[73][c]=8;}
+      // Soldier outpost
+      walls(55,20,63,30); g[63][25]=5; g[57][22]=7; g[57][28]=7; g[61][28]=6;
+      // Second outpost
+      walls(80,30,88,40); g[88][35]=5; g[82][32]=7; g[82][38]=6;
+      // Ember Vault entrance (SE corner direction)
+      walls(120,95,130,108); g[130][101]=5; g[122][98]=9; g[122][99]=9; g[122][100]=9; g[125][106]=6;
+      // Burnt trees
+      [[35,30],[40,45],[55,55],[65,40],[75,65],[85,50],[95,75],[105,55]].forEach(([r,c])=>{ if(g[r][c]===0)g[r][c]=4; });
+      return g;
+    }
+  },
+
+  // ── SOUTH — DUSKROAD & THE KEEP ──
+  south_duskroad: {
+    name: "The Duskroad", subtitle: "The keep is close",
+    npcs:[],
+    enemies:[
+      {type:'skeleton',x:58*64,y:40*64,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:60*64,y:60*64,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:58*64,y:90*64,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:62*64,y:90*64,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:59*64,y:120*64,hp:12,mhp:12,dmg:4,spd:1.8,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:61*64,y:120*64,hp:12,mhp:12,dmg:4,spd:1.8,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Road north connects to center
+      for(let r=0;r<ROWS;r++){g[r][57]=8;g[r][58]=8;g[r][59]=8;g[r][60]=8;g[r][61]=8;}
+      // Walled corridor
+      for(let r=20;r<100;r++){g[r][56]=2;g[r][62]=2;}
+      // Guard towers
+      walls(25,50,33,55); g[33][52]=5; g[27][52]=7;
+      walls(25,63,33,68); g[33][65]=5; g[27][65]=7; g[31][67]=6;
+      // Ruined village
+      walls(5,44,13,52); g[13][48]=5; g[7][46]=7;
+      walls(5,65,13,73); g[13][69]=5; g[7][67]=7; g[11][71]=6;
+      // THE SHATTERED KEEP
+      // Outer wall
+      for(let c=38;c<=88;c++){g[105][c]=2;g[155][c]=2;}
+      for(let r=105;r<=155;r++){g[r][38]=2;g[r][88]=2;}
+      // Main gate
+      g[105][57]=5;g[105][58]=5;g[105][59]=5;g[105][60]=5;g[105][61]=5;
+      // Gate towers
+      walls(100,48,106,56); walls(100,62,106,70);
+      // Courtyard
+      rect(106,39,154,87,1);
+      // Inner keep
+      walls(115,45,150,82);
+      g[115][57]=5;g[115][58]=5;g[115][59]=5;g[115][60]=5;g[115][61]=5;
+      // Main dungeon stairwells
+      g[148][57]=9;g[148][58]=9;g[148][59]=9;
+      // East wing breach
+      for(let r=125;r<=140;r++)g[r][82]=0;
+      rect(125,82,140,87,1);
+      g[132][83]=9;g[132][84]=9;
+      // Courtyard details
+      g[110][50]=7;g[110][76]=7;g[120][45]=6;g[120][81]=6;
+      g[135][63]=2; // keep well
+      [[108,52],[112,72],[118,55],[125,68],[132,50]].forEach(([r,c])=>{g[r][c]=2;});
+      // Trees flanking road
+      [[15,45],[15,75],[18,42],[18,78],[22,44],[22,76]].forEach(([r,c])=>{if(g[r][c]===0)g[r][c]=4;});
+      // Update stair map for new keep position
+      return g;
+    }
+  },
+
+  // ── CORNER REGIONS — dungeon gateways ──
+
+  // NW corner — Rootvault gateway
+  rootvault_region: {
+    name: "The Deep Thornwood", subtitle: "Something ancient grows here",
+    npcs:[
+      {id:'hermit_elder',name:'Elder Moss',icon:'🌿',color:'#27ae60',x:24*64,y:33*64,facing:2,dlg:'hermit_elder'},
+      {id:'hermit_herb',name:'Wren',icon:'🌱',color:'#2ecc71',x:19*64,y:63*64,facing:2,dlg:'hermit_herb'},
+      {id:'hermit_rune',name:'Ser Talvyn',icon:'🔮',color:'#8e44ad',x:29*64,y:93*64,facing:2,dlg:'hermit_rune'},
+    ],
+    enemies:[
+      {type:'slime',x:60*64,y:60*64,hp:3,mhp:3,dmg:1,spd:1.1,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+      {type:'slime',x:80*64,y:80*64,hp:3,mhp:3,dmg:1,spd:1.1,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+      {type:'slime',x:40*64,y:100*64,hp:4,mhp:4,dmg:1,spd:1.2,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Dense forest
+      for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(Math.random()<0.65) g[r][c]=4;
+      // Clear paths
+      for(let r=0;r<ROWS;r++){if(g[r][58]===4)g[r][58]=0;if(g[r][59]===4)g[r][59]=0;if(g[r][60]===4)g[r][60]=0;}
+      for(let c=0;c<COLS;c++){if(g[72][c]===4)g[72][c]=0;if(g[73][c]===4)g[73][c]=0;}
+      // Hermit huts
+      walls(30,20,37,28); g[37][24]=5; g[32][22]=7; g[35][26]=6;
+      walls(60,15,67,23); g[67][19]=5; g[62][17]=7; g[65][21]=6;
+      walls(90,25,97,33); g[97][29]=5; g[92][27]=7; g[95][31]=6;
+      // Stone circles
+      [[20,80],[21,83],[20,86],[18,85],[18,82]].forEach(([r,c])=>{ if(r<ROWS&&c<COLS)g[r][c]=2; });
+      // River (shallow water)
+      rect(118,0,122,127,3); g[120][45]=0;g[120][46]=0;g[120][47]=0; // ford
+      // THE ROOTVAULT ENTRANCE — far northwest corner
+      walls(10,8,20,20); g[20][14]=5;
+      g[13][11]=9;g[13][12]=9;g[13][13]=9; // dungeon stairs
+      g[11][16]=6; g[15][10]=7; // chest + table
+      return g;
+    }
+  },
+
+  // NE corner — Drowned Archive gateway
+  drowned_region: {
+    name: "The Millhaven Wetlands", subtitle: "The island is close",
+    npcs:[
+      {id:'miller_widow',name:'Edda',icon:'🌾',color:'#e67e22',x:25*64,y:75*64,facing:2,dlg:'miller_widow'},
+      {id:'fisherman',name:'Bram',icon:'🎣',color:'#3498db',x:63*64,y:50*64,facing:2,dlg:'fisherman'},
+    ],
+    enemies:[
+      {type:'slime',x:50*64,y:50*64,hp:3,mhp:3,dmg:1,spd:1.0,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+      {type:'slime',x:70*64,y:70*64,hp:3,mhp:3,dmg:1,spd:1.0,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:80*64,y:40*64,hp:5,mhp:5,dmg:2,spd:1.3,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Deep lake — center/east
+      rect(20,60,90,127,12);
+      // Shallow margins
+      rect(18,55,95,127,3);
+      // Island in lake — THE DROWNED ARCHIVE
+      rect(40,95,60,115,0);
+      walls(43,97,57,113); g[57][105]=5;
+      g[47][101]=9;g[47][102]=9;g[47][103]=9; // dungeon stairs
+      g[45][109]=6; g[50][99]=7;
+      // Dock
+      for(let c=55;c<=70;c++) g[50][c]=8;
+      for(let c=58;c<=68;c+=3) g[49][c]=2;
+      g[48][60]=6;g[48][64]=6; // boats
+      // Mill town
+      walls(70,20,80,30); g[80][25]=5; g[72][22]=7; g[77][28]=6;
+      walls(70,35,78,43); g[78][39]=5; g[72][37]=7;
+      // Marsh
+      for(let r=90;r<ROWS;r++) for(let c=30;c<100;c++) if(Math.random()<0.4) g[r][c]=3;
+      // Causeway
+      for(let c=0;c<COLS;c++){g[95][c]=8;g[96][c]=8;}
+      // Road west connects to center
+      for(let r=0;r<ROWS;r++){g[r][0]=8;g[r][1]=8;g[r][2]=8;}
+      // Trees
+      [[10,10],[15,25],[20,40],[30,15],[40,8],[55,18],[65,5]].forEach(([r,c])=>{if(g[r][c]===0)g[r][c]=4;});
+      return g;
+    }
+  },
+
+  // SW corner — Catacombs gateway (bonefields)
+  sw_bonefields: {
+    name: "The Bonefields", subtitle: "The dead rest uneasy",
+    npcs:[
+      {id:'gravedigger',name:'Aldo',icon:'⚰️',color:'#636e72',x:54*64,y:44*64,facing:2,dlg:'gravedigger'},
+      {id:'lost_priest',name:'Brother Fen',icon:'✝️',color:'#dfe6e9',x:41*64,y:71*64,facing:0,dlg:'lost_priest'},
+    ],
+    enemies:[
+      {type:'skeleton',x:50*64,y:50*64,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:70*64,y:30*64,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:40*64,y:80*64,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:80*64,y:90*64,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:60*64,y:110*64,hp:7,mhp:7,dmg:3,spd:1.5,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Graves
+      for(let r=5;r<ROWS;r+=3) for(let c=5;c<COLS;c+=4) if(Math.random()<0.5) g[r][c]=2;
+      // Road east connects to center
+      for(let r=0;r<ROWS;r++){g[r][125]=8;g[r][126]=8;g[r][127]=8;}
+      for(let c=0;c<COLS;c++){g[72][c]=8;g[73][c]=8;}
+      // Old battlefield
+      for(let r=100;r<130;r++) for(let c=20;c<80;c++) if(Math.random()<0.06) g[r][c]=2;
+      // Gravedigger hut
+      walls(40,50,48,58); g[48][54]=5; g[42][52]=7; g[46][56]=6;
+      // Priest camp
+      g[70][40]=7;g[70][42]=7;g[71][41]=6;
+      // COLLAPSED CHAPEL — far southwest
+      walls(15,10,28,25); g[28][17]=5;
+      for(let c=11;c<=24;c++) if(Math.random()<0.3) g[15][c]=0; // collapsed walls
+      for(let r=16;r<=27;r++) if(Math.random()<0.2) g[r][10]=0;
+      g[20][15]=7;g[22][17]=7;g[18][19]=6; // altar, bench, chest
+      // THE CATACOMBS ENTRANCE
+      g[25][17]=9;g[25][18]=9; // stair down
+      // Trees/dead trees around graves
+      [[8,30],[12,60],[20,80],[35,25],[45,70],[55,40],[60,90],[75,55],[85,20]].forEach(([r,c])=>{if(g[r][c]===0)g[r][c]=4;});
+      return g;
+    }
+  },
+
+  // SE corner — Saltmine gateway
+  se_farmlands: {
+    name: "The Harwick Farmlands", subtitle: "Something stirs beneath",
+    npcs:[
+      {id:'farmhand',name:'Orin',icon:'🌽',color:'#f1c40f',x:26*64,y:26*64,facing:2,dlg:'farmhand'},
+    ],
+    enemies:[
+      {type:'slime',x:40*64,y:60*64,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+      {type:'slime',x:60*64,y:80*64,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+      {type:'slime',x:50*64,y:100*64,hp:4,mhp:4,dmg:1,spd:1.3,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
+      {type:'skeleton',x:80*64,y:70*64,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    ],
+    buildWorld(){
+      const g=[]; for(let r=0;r<ROWS;r++){g.push([]);for(let c=0;c<COLS;c++)g[r].push(0);}
+      function rect(r1,c1,r2,c2,t){for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=t;}
+      function walls(r1,c1,r2,c2){rect(r1,c1,r2,c2,1);for(let c=c1;c<=c2;c++){g[r1][c]=2;g[r2][c]=2;}for(let r=r1;r<=r2;r++){g[r][c1]=2;g[r][c2]=2;}}
+      // Road west and north connects to other regions
+      for(let r=0;r<ROWS;r++){g[r][0]=8;g[r][1]=8;g[r][2]=8;}
+      for(let c=0;c<COLS;c++){g[0][c]=8;g[1][c]=8;}
+      // Crop fields
+      rect(40,20,80,90,8); // tilled earth
+      for(let r=40;r<=80;r+=4) rect(r,20,r,90,3); // irrigation
+      // Harwick's smithy
+      walls(20,20,32,32); g[32][26]=5; g[22][22]=7; g[22][28]=7; g[22][29]=7; g[30][30]=6;
+      // Stable
+      walls(22,34,30,42); g[30][38]=5; g[24][36]=7;
+      // Farmhouse
+      walls(20,50,32,62); g[32][56]=5; g[22][52]=7; g[22][58]=7; g[30][60]=6;
+      // Barn — SALTMINE ENTRANCE beneath
+      walls(20,70,35,85); g[35][77]=5;
+      g[25][73]=9;g[25][74]=9;g[25][75]=9; // stair down — Saltmine
+      g[22][80]=6;g[28][72]=7;
+      // Slime-infested south fields
+      for(let r=85;r<ROWS;r++) for(let c=0;c<100;c++) if(Math.random()<0.15) g[r][c]=3;
+      // Trees around farm
+      [[15,10],[15,95],[38,5],[38,95],[85,10],[85,95],[100,50]].forEach(([r,c])=>{if(g[r][c]===0)g[r][c]=4;});
+      return g;
+    }
+  },
+};
+
+
+// ═══════════════════════════════════════════════════════════════
+// TIME OF DAY SYSTEM
+// One full day = 18000 frames (~5 min real time at 60fps)
+// 0.0=midnight  0.25=dawn  0.5=noon  0.75=dusk  1.0=midnight
+// ═══════════════════════════════════════════════════════════════
+
+const DAY_LENGTH = 18000;
+
+// Start at early morning — just before dawn so first experience is sunrise
+if(typeof GS.tick === 'undefined') {} // initialized in GS below
+
+function getTimeOfDay(){
+  return (GS.tick % DAY_LENGTH) / DAY_LENGTH;
+}
+
+function isNight(){
+  const t = getTimeOfDay();
+  return t < 0.22 || t > 0.75;
+}
+
+function isDusk(){
+  const t = getTimeOfDay();
+  return t > 0.68 && t < 0.82;
+}
+
+function isDawn(){
+  const t = getTimeOfDay();
+  return t > 0.18 && t < 0.30;
+}
+
+function getSkyAlpha(){
+  const t = getTimeOfDay();
+  // 0.0=midnight(dark) 0.25=dawn(brightening) 0.5=noon(bright) 0.75=dusk(darkening)
+  // Night: t<0.22 or t>0.75 — dark overlay
+  // Day: t 0.30-0.68 — no overlay
+  // Dawn/dusk transitions
+  if(t >= 0.30 && t <= 0.68) return 0; // full daylight
+  if(t >= 0.22 && t < 0.30){ // dawn — rapidly brightening
+    return (1 - (t-0.22)/0.08) * 0.55;
+  }
+  if(t > 0.68 && t <= 0.75){ // dusk — rapidly darkening
+    return ((t-0.68)/0.07) * 0.75;
+  }
+  // Night — stays dark, peaks at midnight
+  const nightT = t > 0.75 ? (t-0.75)/0.25 : (0.22-t)/0.22;
+  return 0.65 + nightT * 0.15; // 0.65 to 0.80 — dark but not blind
+}
+
+function getSkyColor(){
+  const t = getTimeOfDay();
+  // Dawn: warm orange-pink
+  if(t > 0.20 && t < 0.30){
+    const p = (t - 0.20) / 0.10;
+    return `rgba(${Math.floor(180*(1-p))},${Math.floor(80*(1-p))},${Math.floor(20*(1-p))},${0.35*(1-p)})`;
+  }
+  // Dusk: deep purple-orange
+  if(t > 0.70 && t < 0.80){
+    const p = (t - 0.70) / 0.10;
+    return `rgba(${Math.floor(120*p)},${Math.floor(40*p)},${Math.floor(80*p)},${0.4*p})`;
+  }
+  // Night: deep blue-black
+  if(isNight()){
+    return `rgba(0,5,30,${getSkyAlpha()})`;
+  }
+  return null; // full day — no overlay
+}
+
+function getCorenLightRadius(){
+  // Returns Coren's personal light radius based on equipped weapon
+  if(!LOADOUT.coren) return 0;
+  const pri = LOADOUT.coren.primary;
+  const sec = LOADOUT.coren.secondary;
+  // Orb in secondary — brightest
+  if(sec==='coren_light_1') return 9;
+  if(sec==='coren_light_2') return 11;
+  // Staff in primary — medium
+  if(pri==='coren_staff_1'||pri==='coren_staff_2') return 4.5;
+  // Wands — tight close glow
+  if(pri==='coren_wand_1'||pri==='coren_wand_2') return 2.5;
+  return 2; // fallback
+}
+
+function getNightLightRadius(){
+  // Player ambient radius — always navigable
+  let radius = 5.5;
+  if(!GS.p) return radius;
+  // If playing AS Coren, his weapon determines the light
+  if(_HERO&&_HERO.id==='coren'){
+    return Math.max(5.5, getCorenLightRadius());
+  }
+  // Coren in party — his light adds to world brightness
+  const corenInParty = GS.npcs.some(n=>n.id==='coren');
+  if(corenInParty){
+    const corenR = getCorenLightRadius();
+    if(corenR > radius) radius = corenR;
+  }
+  return radius;
+}
+
+function renderSky(ctx, VW, VH){
+  if(DUNGEON) return; // dungeon darkness handled separately
+  const alpha = getSkyAlpha();
+
+  if(alpha > 0 && GS.p){
+    // At night — draw darkness with a light radius around player
+    const nightCanvas = document.createElement('canvas');
+    nightCanvas.width = VW; nightCanvas.height = VH;
+    const nc = nightCanvas.getContext('2d');
+
+    // Fill with night color
+    nc.fillStyle = `rgba(0,5,25,${alpha})`;
+    nc.fillRect(0,0,VW,VH);
+
+    // Punch a light hole around the player
+    const lx = GS.p.x - GS.cam.x;
+    const ly = GS.p.y - GS.cam.y;
+    const lightR = getNightLightRadius() * TS;
+
+    const grad = nc.createRadialGradient(lx, ly, lightR*0.1, lx, ly, lightR);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');         // fully transparent at center
+    grad.addColorStop(0.6, 'rgba(0,0,0,0)');       // still clear in mid-range
+    grad.addColorStop(1, `rgba(0,5,25,${alpha})`); // fades to night at edge
+
+    nc.globalCompositeOperation = 'destination-out';
+    nc.fillStyle = grad;
+    nc.beginPath();
+    nc.arc(lx, ly, lightR, 0, Math.PI*2);
+    nc.fill();
+
+    ctx.drawImage(nightCanvas, 0, 0);
+
+    // Warm torch tint at player center
+    const warmGrad = ctx.createRadialGradient(lx,ly,0,lx,ly,lightR*0.5);
+    warmGrad.addColorStop(0, `rgba(255,180,80,${alpha*0.08})`);
+    warmGrad.addColorStop(1, 'rgba(255,120,0,0)');
+    ctx.fillStyle = warmGrad;
+    ctx.beginPath(); ctx.arc(lx,ly,lightR*0.5,0,Math.PI*2); ctx.fill();
+  }
+
+  // Dawn/dusk color washes — no light radius needed, just tint
+  const skyColor = getSkyColor();
+  if(skyColor){
+    ctx.fillStyle = skyColor;
+    ctx.fillRect(0,0,VW,VH);
+  }
+}
+
+// Stars — only visible at night
+function renderStars(ctx, VW, VH){
+  if(DUNGEON) return;
+  if(!isNight()) return;
+  const alpha = getSkyAlpha();
+  if(alpha < 0.3) return;
+  const starAlpha = Math.min(1, (alpha - 0.3) / 0.5);
+  // Deterministic star field based on position
+  ctx.fillStyle = `rgba(255,255,240,${starAlpha * 0.8})`;
+  const seed = 42;
+  for(let i=0;i<80;i++){
+    const sx = ((i*137+seed)%VW);
+    const sy = ((i*97+seed*2)%Math.floor(VH*0.6));
+    const twinkle = Math.sin(GS.tick*0.05 + i) * 0.3 + 0.7;
+    ctx.globalAlpha = starAlpha * twinkle * 0.7;
+    ctx.fillRect(sx, sy, i%3===0?2:1, i%3===0?2:1);
+  }
+  ctx.globalAlpha = 1;
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// KEY & LOCKED DOOR SYSTEM — Dungeon Progression
+// Each dungeon is locked. Each dungeon holds the key to the next.
+//
+// SEQUENCE:
+//   Inn chest → key_catacombs
+//   Catacombs (final chest) → key_rootvault
+//   Rootvault (final chest) → key_saltmine
+//   Saltmine (final chest) → key_frost
+//   Frost Vaults (final chest) → key_drowned
+//   Drowned Archive (final chest) → key_keep
+//   Shattered Keep → finale
+// ═══════════════════════════════════════════════════════════════
+
+const KEY_ITEMS = {
+  key_catacombs:  { id:'key_catacombs',  name:'Tarnished Key',    icon:'🗝️', desc:'Found in the inn. Opens the catacombs beneath the chapel.' },
+  key_rootvault:  { id:'key_rootvault',  name:'Root-Bound Key',   icon:'🗝️', desc:'Found in the catacombs. The wood grain matches the vault door.' },
+  key_saltmine:   { id:'key_saltmine',   name:'Dwarven Salt Key',  icon:'🗝️', desc:'Found in the Rootvault. Heavy, crystalline handle.' },
+  key_frost:      { id:'key_frost',      name:'Frost Key',         icon:'🗝️', desc:'Found in the Saltmine. Ice-cold to the touch.' },
+  key_drowned:    { id:'key_drowned',    name:'Waterlogged Key',   icon:'🗝️', desc:'Found in the Frost Vaults. Smells of the deep.' },
+  key_keep:       { id:'key_keep',       name:'Keep Master Key',   icon:'🗝️', desc:'Found in the Drowned Archive. This opens the keep.' },
+  key_skeleton:   { id:'key_skeleton',   name:'Skeleton Key',      icon:'🗝️', desc:'Opens almost anything. Almost.' },
+};
+
+// Locked dungeon entrance doors — 'row,col' in each region
+// These use the region-prefixed key 'regionId:row,col'
+const LOCKED_DOORS = {
+  // SW Bonefields — Catacombs chapel stairs area
+  'sw_bonefields:25,17': 'key_catacombs',
+  'sw_bonefields:25,18': 'key_catacombs',
+  // NW Rootvault — vault entrance
+  'rootvault_region:20,14': 'key_rootvault',
+  // SE Farmlands — Saltmine barn stairs
+  'se_farmlands:35,77': 'key_saltmine',
+  // West Frozen — Frost cave entrance
+  'west_frozen:30,16': 'key_frost',
+  // NE Drowned — island dungeon stairs (approached by boat/wading)
+  'drowned_region:57,105': 'key_drowned',
+  // South Keep — main inner gate
+  'south_duskroad:148,57': 'key_keep',
+  'south_duskroad:148,58': 'key_keep',
+  'south_duskroad:148,59': 'key_keep',
+};
+
+function _doorKey(r, c){
+  const regionId = getRegionId(REGION_X, REGION_Y);
+  return (regionId||'center')+':'+r+','+c;
+}
+
+function isDoorLocked(r, c){
+  return LOCKED_DOORS[_doorKey(r,c)] !== undefined;
+}
+
+function hasKeyForDoor(r, c){
+  const keyId = LOCKED_DOORS[_doorKey(r,c)];
+  if(!keyId) return true;
+  return (INVENTORY[keyId]||0) > 0 || (INVENTORY['key_skeleton']||0) > 0;
+}
+
+function tryUnlockDoor(r, c){
+  const dk = _doorKey(r,c);
+  const keyId = LOCKED_DOORS[dk];
+  if(!keyId) return true;
+
+  const hasSkeleton = (INVENTORY['key_skeleton']||0) > 0;
+  const hasSpecific = (INVENTORY[keyId]||0) > 0;
+
+  if(hasSpecific || hasSkeleton){
+    const usedKey = hasSpecific ? keyId : 'key_skeleton';
+    // Consume key (skeleton key is reusable)
+    if(usedKey !== 'key_skeleton'){
+      INVENTORY[usedKey] = (INVENTORY[usedKey]||1) - 1;
+      if(INVENTORY[usedKey] <= 0) delete INVENTORY[usedKey];
+    }
+    delete LOCKED_DOORS[dk];
+    const kName = KEY_ITEMS[usedKey]?KEY_ITEMS[usedKey].name:'Key';
+    showBuyFlash('🗝️ Unlocked with '+kName+'.');
+    return true;
+  }
+
+  // Tell player what they need
+  const needed = KEY_ITEMS[keyId];
+  showBuyFlash('🔒 Locked. Need: '+(needed?needed.name:'a key')+'.');
+  return false;
+}
+
+// Give a key when a dungeon final chest is opened
+function giveProgressionKey(fromDungeon){
+  const nextKey = {
+    catacombs:     'key_rootvault',
+    rootvault:     'key_saltmine',
+    saltmine:      'key_frost',
+    frost_vaults:  'key_drowned',
+    drowned_archive:'key_keep',
+  }[fromDungeon];
+  if(!nextKey) return;
+  INVENTORY[nextKey] = (INVENTORY[nextKey]||0) + 1;
+  const item = KEY_ITEMS[nextKey];
+  showBuyFlash('Found: '+(item?item.icon+' '+item.name:'a key'));
+  showQuestNotif({title: item?item.name:'Key Found', hint: item?item.desc:'A key to the next dungeon.'});
+}
+
 function openDlg(npcId){
   const char = CHARACTERS.find(c=>c.id===npcId);
   if(!char) return;
@@ -4517,7 +6330,7 @@ function atk(){
 
   if(type==='bow'){
     // Ranged arrow
-    const d = {0:[0,-1],1:[1,0],2:[0,1],3:[-1,0]}[p.facing];
+    const _as=.707;const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_as,-_as],5:[_as,_as],6:[-_as,_as],7:[-_as,-_as]}[p.facing]||[0,-1];
     GS.projectiles.push({
       x:p.x,y:p.y,vx:d[0]*7,vy:d[1]*7,
       dmg:p.dmg,color:'#c8a040',sz:4,life:80,
@@ -4561,7 +6374,7 @@ function skill(){
 
   } else if(type==='dash'){
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     p.x+=d[0]*TS*2.8; p.y+=d[1]*TS*2.8;
     burst(p.x,p.y,'#2ecc71',10);
 
@@ -4587,7 +6400,7 @@ function skill(){
   } else if(type==='surge'){
     // Coren wands — rapid burst forward
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     const wandItem=CATALOGUE[LOADOUT.coren.primary];
     const sDmg=wandItem?wandItem.dmg:1;
     for(let i=0;i<4;i++){
@@ -4655,10 +6468,10 @@ function updateStunned(dt){
 function updateNPCCombat(dt){
   
 const NPC_HOME = {
-  torvin: { x:9*64+32,  y:17*64+32, facing:0 },
-  aeryn:  { x:12*64+32, y:17*64+32, facing:0 },
-  coren:  { x:10*64+32, y:18*64+32, facing:0 }, // center desk
-  roland: { x:11*64+32, y:16*64+32, facing:2 },
+  torvin: { x:76*64+32, y:67*64+32, facing:0 },
+  aeryn:  { x:81*64+32, y:67*64+32, facing:0 },
+  coren:  { x:78*64+32, y:68*64+32, facing:0 }, // center desk
+  roland: { x:79*64+32, y:66*64+32, facing:2 },
 };
 
 GS.npcs.forEach(n=>{
@@ -4822,11 +6635,11 @@ const CATALOGUE = {
   coren_wand_3: { id:'coren_wand_3', who:'coren', slot:'primary', hands:1, tier:3, name:'Void Pair', icon:'🪄', desc:'Attuned to the null-resonance of the Kern. The egg hums when dey holds them.', price:280, dmg:2, statLabel:'DMG 2×3 · SURGE · HOMING', type:'wands' },
   // Ward items unchanged
 
-  coren_light_1: { id:'coren_light_1', who:'coren', slot:'secondary', hands:1, tier:1, subclass:'runewright',
-    name:'Mage Light',  icon:'🔆',
+  coren_light_1: { id:'coren_light_1', who:'coren', slot:'secondary', hands:1, tier:1,
+    name:'Mage Light',  icon:'🔆', hint:'Equip in secondary slot for night vision',
     desc:'A sustained runic orb. Illuminates a radius, reveals concealed enemies. Held in the off hand.',
     price:0, dmg:0, statLabel:'1H · ILLUMINATE · REVEAL · OFFHAND' },
-  coren_light_2: { id:'coren_light_2', who:'coren', slot:'secondary', hands:1, tier:2, subclass:'runewright',
+  coren_light_2: { id:'coren_light_2', who:'coren', slot:'secondary', hands:1, tier:2,
     name:'Seer Orb',    icon:'🔆',
     desc:'A refined light — wider radius, marks enemy positions on Roland\'s map.',
     price:140, dmg:0, statLabel:'1H · WIDE LIGHT · MAP MARK · OFFHAND' },
@@ -4919,8 +6732,153 @@ const SHOPS = {
   }
 };
 
+
+let _shopTab = 'buy';
+
+function switchShopTab(tab){
+  _shopTab = tab;
+  document.getElementById('tab-buy').classList.toggle('active', tab==='buy');
+  document.getElementById('tab-sell').classList.toggle('active', tab==='sell');
+  const content = document.getElementById('shop-content');
+  if(tab==='sell') renderSellTab(content);
+  else openShop(activeShop); // re-render buy tab
+}
+
+function renderSellTab(content){
+  content.innerHTML = '';
+
+  // Gather all sellable items owned by party
+  const sellable = [];
+
+  // Story items — never sellable
+  const STORY_ITEMS = new Set(['roland_map_1','coren_egg','coren_notes']);
+
+  // Weapons/armor owned
+  Object.keys(ECONOMY.owned).forEach(itemId=>{
+    if(!ECONOMY.owned[itemId]) return;
+    if(STORY_ITEMS.has(itemId)) return;
+    const item = CATALOGUE[itemId];
+    if(!item) return;
+    const sellPrice = Math.floor((item.price||0) * 0.6);
+    if(sellPrice <= 0) return;
+
+    // Check if equipped by a party member
+    let equippedBy = null;
+    let slot = null;
+    ['torvin','aeryn','roland','coren'].forEach(charId=>{
+      const L = LOADOUT[charId];
+      if(!L) return;
+      if(L.primary===itemId){ equippedBy=charId; slot='primary'; }
+      if(L.secondary===itemId){ equippedBy=charId; slot='secondary'; }
+    });
+
+    const isEquipped = equippedBy !== null;
+    const char = equippedBy ? CHARACTERS.find(c=>c.id===equippedBy) : null;
+
+    sellable.push({ itemId, item, sellPrice, isEquipped, equippedBy, char, slot });
+  });
+
+  // Consumables in inventory
+  Object.keys(INVENTORY).forEach(itemId=>{
+    const qty = INVENTORY[itemId];
+    if(!qty||qty<=0) return;
+    if(STORY_ITEMS.has(itemId)) return;
+    const item = CATALOGUE[itemId];
+    if(!item) return;
+    const sellPrice = Math.floor((item.price||0) * 0.6);
+    if(sellPrice <= 0) return;
+    sellable.push({ itemId, item, sellPrice, isEquipped:false, equippedBy:null, qty });
+  });
+
+  if(sellable.length === 0){
+    const empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;color:#333;padding:40px;letter-spacing:2px;font-size:14px;';
+    empty.textContent = 'Nothing to sell.';
+    content.appendChild(empty);
+    return;
+  }
+
+  // Section label
+  const lbl = document.createElement('div');
+  lbl.className = 'shop-section-lbl';
+  lbl.textContent = '── SELL ITEMS (60% VALUE) ──';
+  content.appendChild(lbl);
+
+  sellable.forEach(({itemId, item, sellPrice, isEquipped, equippedBy, char, qty})=>{
+    const div = document.createElement('div');
+    div.className = 'shop-sell-item';
+
+    const ownerLabel = isEquipped
+      ? (char ? char.name + ' — equipped' : 'equipped')
+      : (qty ? 'x'+qty+' in inventory' : 'in bag');
+
+    const warnLabel = isEquipped
+      ? '⚠ Will affect ' + (char?char.name:'party') + '\'s approval'
+      : '';
+
+    div.innerHTML =
+      '<div class="shop-sell-icon">'+item.icon+'</div>'+
+      '<div class="shop-sell-info">'+
+        '<div class="shop-sell-name">'+item.name+'</div>'+
+        '<div class="shop-sell-owner">'+ownerLabel+'</div>'+
+        (warnLabel?'<div class="shop-sell-warn">'+warnLabel+'</div>':'')+
+      '</div>'+
+      '<div class="shop-sell-price">🪙'+sellPrice+'</div>'+
+      '<button class="shop-sell-btn'+(isEquipped?' warn':'')+'" '+
+        'onclick="sellItem(\''+itemId+'\','+(qty||1)+','+isEquipped+',\''+equippedBy+'\''+')">'+
+        'SELL</button>';
+    content.appendChild(div);
+  });
+}
+
+function sellItem(itemId, qty, isEquipped, equippedBy){
+  const item = CATALOGUE[itemId];
+  if(!item) return;
+  const sellPrice = Math.floor((item.price||0) * 0.6);
+
+  ECONOMY.gold += sellPrice;
+
+  if(item.consumable || INVENTORY[itemId]){
+    // Consumable — reduce inventory
+    INVENTORY[itemId] = Math.max(0, (INVENTORY[itemId]||1) - 1);
+    if(INVENTORY[itemId] === 0) delete INVENTORY[itemId];
+    showBuyFlash('Sold: '+item.name+' +🪙'+sellPrice);
+  } else {
+    // Weapon/armor — remove from owned and unequip
+    ECONOMY.owned[itemId] = false;
+    // Unequip from whoever had it
+    ['torvin','aeryn','roland','coren'].forEach(charId=>{
+      const L = LOADOUT[charId];
+      if(!L) return;
+      if(L.primary===itemId) L.primary=null;
+      if(L.secondary===itemId) L.secondary=null;
+    });
+
+    // Social consequence if equipped
+    if(isEquipped && equippedBy && equippedBy!=='null'){
+      changeApproval(equippedBy, -8);
+      const char = CHARACTERS.find(c=>c.id===equippedBy);
+      const name = char ? char.name : equippedBy;
+      showBuyFlash(name+' disapproves. -8 approval.');
+      // Brief party reaction
+      setTimeout(()=>showBuyFlash('Sold: '+item.name+' +🪙'+sellPrice), 2200);
+    } else {
+      showBuyFlash('Sold: '+item.name+' +🪙'+sellPrice);
+    }
+  }
+
+  document.getElementById('shop-gold-display').textContent = '🪙 '+ECONOMY.gold;
+  updateHUD();
+  updateWeaponBtn();
+
+  // Re-render sell tab
+  renderSellTab(document.getElementById('shop-content'));
+}
+
 function openShop(shopId){
   activeShop=shopId;
+  _shopTab='buy';
+  setTimeout(()=>{ const tb=document.getElementById('tab-buy'); if(tb){tb.classList.add('active');} const ts=document.getElementById('tab-sell'); if(ts){ts.classList.remove('active');} },0);
   const shop=SHOPS[shopId];
   GS.paused=true;
   const win=document.getElementById('shop-window');
@@ -5351,19 +7309,69 @@ function equipItem(charId,slotKey,itemId){
   if(isSpell&&!PARTY.knownSpells.includes(itemId)) return;
   if(!isSpell&&!ECONOMY.owned[itemId]) return;
   const item=CATALOGUE[itemId];
+  const loadout=LOADOUT[charId];
+
+  // Track what was there before
+  const prevItem=slotKey==='primary'?CATALOGUE[loadout.primary]:
+                 slotKey==='secondary'?CATALOGUE[loadout.secondary]:null;
+  const hadNothing=!prevItem;
+
   if(slotKey==='primary'){
-    LOADOUT[charId].primary=itemId;
-    // If 2H, clear secondary
-    if(item&&item.hands===2) LOADOUT[charId].secondary=null;
+    loadout.primary=itemId;
+    if(item&&item.hands===2) loadout.secondary=null;
   } else if(slotKey==='secondary'){
-    // Only equip secondary if primary is 1H
-    const prim=CATALOGUE[LOADOUT[charId].primary];
-    if(!prim||prim.hands!==2) LOADOUT[charId].secondary=itemId;
+    const prim=CATALOGUE[loadout.primary];
+    if(!prim||prim.hands!==2) loadout.secondary=itemId;
   } else {
-    // Spell slots
-    LOADOUT[charId][slotKey]=itemId;
+    loadout[slotKey]=itemId;
   }
-  if(_HERO&&_HERO.id===charId&&GS.p){ const item=CATALOGUE[itemId]; if(item&&item.dmg) GS.p.dmg=item.dmg; }
+
+  // ── Gear approval mechanic ──
+  // Only fires for party members (not the hero), and only for genuinely new/better gear
+  if(!isSpell&&charId!==(_HERO?_HERO.id:'')&&APPROVAL[charId]!==undefined){
+    if(!PARTY.gearHistory[charId]) PARTY.gearHistory[charId]={};
+      // Ensure Coren always has light orb available regardless of subclass
+      if(charId==='coren') ECONOMY.owned['coren_light_1']=true;
+    const history = PARTY.gearHistory[charId];
+    const newTier = item ? (item.tier||1) : 0;
+    const prevBest = history[slotKey] || 0; // best tier ever in this slot
+
+    if(newTier > prevBest){
+      // Genuinely better than anything they've ever had
+      const isFirstEver = prevBest === 0;
+      const delta = isFirstEver ? +10 : +6;
+      const char = CHARACTERS.find(c=>c.id===charId);
+      history[slotKey] = newTier; // record new best
+      changeApproval(charId, delta);
+      showBuyFlash((char?char.name:'Party')+(isFirstEver?' appreciates the gear.':' — upgrade noted.')+' +'+delta);
+    } else if(item&&prevItem&&(item.dmg||0)>(prevItem.dmg||0)&&newTier===prevBest){
+      // Same tier, but better damage than current (not historically better tier)
+      changeApproval(charId,+2);
+    }
+    // Returning old gear, same tier, or worse — no approval
+  }
+
+  if(_HERO&&_HERO.id===charId&&GS.p){ if(item&&item.dmg) GS.p.dmg=item.dmg; }
+  const el=document.getElementById('menu-content');
+  el._openSlot=null;
+  updateWeaponBtn(); updateActionBtn();
+  renderMenuContent('inventory');
+}
+
+function unequipSlot(charId,slotKey){
+  const loadout=LOADOUT[charId];
+  const prevItem=CATALOGUE[slotKey==='primary'?loadout.primary:loadout.secondary];
+  if(!prevItem) return; // nothing to unequip
+
+  loadout[slotKey]=null;
+
+  // ── Disapproval for unequipping ──
+  if(charId!==(_HERO?_HERO.id:'')&&APPROVAL[charId]!==undefined){
+    changeApproval(charId,-8);
+    const char=CHARACTERS.find(c=>c.id===charId);
+    showBuyFlash((char?char.name:'Party')+' — taken without replacement. -8');
+  }
+
   const el=document.getElementById('menu-content');
   el._openSlot=null;
   updateWeaponBtn(); updateActionBtn();
@@ -5650,8 +7658,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 // ── SHOP PROXIMITY POSITIONS ──
-const GREYPOST_POS = { x:2*64+32, y:3*64+32 };
-const HARWICKS_POS = { x:15*64+32, y:14*64+32 };
+const GREYPOST_POS = { x:44*64+32, y:53*64+32 };
+const HARWICKS_POS = { x:76*64+32, y:82*64+32 };
 const SHOP_RANGE = 80;
 
 // ── WEAPON DISPLAY INFO ──
@@ -5727,6 +7735,14 @@ function hasSecondaryWeapon(charId){
     if(prim&&prim.hands===2) return false;
     return loadout.secondary!=null;
   }
+  // Aeryn Beastmaster — dagger coexists with 2H bow
+  if(charId==='aeryn'){
+    const sec=CATALOGUE[loadout.secondary];
+    if(sec&&(sec.id==='aeryn_dagger_1'||sec.id==='aeryn_dagger_2')) return true;
+    const prim=CATALOGUE[loadout.primary];
+    if(prim&&prim.hands===2) return false;
+    return loadout.secondary!=null;
+  }
   const prim=CATALOGUE[loadout.primary];
   if(prim&&prim.hands===2) return false;
   return loadout.secondary!=null;
@@ -5786,7 +7802,7 @@ function updateWeaponBtn(){
   btn.style.display=has?'flex':'none';
   if(!has) return;
   const other=otherWeaponInfo(id);
-  const iEl=btn.querySelector('.abtn-icon');
+  const iEl=document.getElementById('btn-weapon-icon')||btn.querySelector('.abtn-icon');
   const lEl=btn.querySelector('.abtn-lbl');
   if(iEl) iEl.textContent=other.icon;
   if(lEl) lEl.textContent='SWAP';
@@ -5875,16 +7891,9 @@ function openChest(r,c){
   if(openedChests.has(key)) return;
   openedChests.add(key);
   burst(c*TS+TS/2,r*TS+TS/2,'#f1c40f',14);
-  WORLD[r][c]=1;
-
-  // First inn chest contains the map
-  if(r===15&&c===9&&!PARTY.hasMap){
-    PARTY.hasMap=true;
-    ECONOMY.owned['roland_map_1']=true;
-    showBuyFlash('Found: A Map');
-    showQuestNotif({title:'A Map',hint:'Someone left it. It shows the road to the keep — and something drawn in the east wing.'});
-    return;
-  }
+  if(DUNGEON) DUNGEON_WORLD[r][c]=1; else WORLD[r][c]=1;
+  innChestEvent(r,c);
+  dungeonChestEvent(r,c);
 
   const roll=Math.random();
   if(roll<0.30){
@@ -6468,7 +8477,7 @@ function updateSable(dt){
   } else if(s.state==='scout'){
     s.scoutAngle+=dt*0.05;
     const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,1];
+    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];
     const tx=p.x+d[0]*TS*3+Math.cos(s.scoutAngle)*20;
     const ty=p.y+d[1]*TS*3+Math.sin(s.scoutAngle)*20;
     const dx=tx-s.x,dy=ty-s.y,dist=Math.hypot(dx,dy)||1;
@@ -6535,6 +8544,10 @@ function drawWardEffect(ctx,cx,cy){
 <!-- SHOP OVERLAY -->
 <div id="shop-overlay">
   <div class="shop-window" id="shop-window">
+    <div class="shop-tabs">
+      <button class="shop-tab active" id="tab-buy" onclick="switchShopTab('buy')">BUY</button>
+      <button class="shop-tab" id="tab-sell" onclick="switchShopTab('sell')">SELL</button>
+    </div>
     <div class="shop-header">
       <div class="shop-icon" id="shop-icon">🏪</div>
       <div>
@@ -6597,5 +8610,13 @@ function drawWardEffect(ctx,cx,cy){
 
 <div id="quest-notif"></div>
 <div id="inspire-banner">♪ INSPIRED ♪</div>
+<div id="dungeon-title" style="display:none;position:fixed;top:30%;left:50%;transform:translateX(-50%);text-align:center;z-index:200;pointer-events:none;opacity:0;transition:opacity .5s">
+  <div class="dt-name" style="font-family:'VT323',monospace;font-size:32px;color:#c8860a;letter-spacing:4px;text-shadow:0 0 20px #c8860a"></div>
+  <div class="dt-sub" style="font-family:'VT323',monospace;font-size:16px;color:#888;letter-spacing:3px;margin-top:4px"></div>
+</div>
+<style>
+#dungeon-title.on{display:block!important;animation:dt-anim 3s forwards}
+@keyframes dt-anim{0%{opacity:0}20%{opacity:1}70%{opacity:1}100%{opacity:0}}
+</style>
 </body>
 </html>

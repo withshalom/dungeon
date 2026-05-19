@@ -5680,7 +5680,7 @@ function getSkyAlpha(){
   }
   // Night — stays dark, peaks at midnight
   const nightT = t > 0.75 ? (t-0.75)/0.25 : (0.22-t)/0.22;
-  return 0.65 + nightT * 0.15; // 0.65 to 0.80 — dark but not blind
+  return 0.45 + nightT * 0.10; // 0.45 to 0.55 — atmospheric, still playable
 }
 
 function getSkyColor(){
@@ -5754,9 +5754,9 @@ function renderSky(ctx, VW, VH){
     const lightR = getNightLightRadius() * TS;
 
     const grad = nc.createRadialGradient(lx, ly, lightR*0.1, lx, ly, lightR);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');         // fully transparent at center
-    grad.addColorStop(0.6, 'rgba(0,0,0,0)');       // still clear in mid-range
-    grad.addColorStop(1, `rgba(0,5,25,${alpha})`); // fades to night at edge
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.75, 'rgba(0,0,0,0)');      // clear further out
+    grad.addColorStop(1, `rgba(0,5,25,${alpha})`);
 
     nc.globalCompositeOperation = 'destination-out';
     nc.fillStyle = grad;

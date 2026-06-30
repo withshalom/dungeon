@@ -1591,7 +1591,15 @@ function showConvergence(){
 // GAME ENGINE
 // ─────────────────────────────────────────────
 const TS=64; // tile size — big, SNES quality
-const COLS=128, ROWS=160; // portrait: taller than wide
+// ── SINGLE WORLD REBUILD ──
+// mkWorld() already paints every zone (Greyport, Thornwood, Highland Moors,
+// Millhaven, the hub, Ash Plains, Harwick, Bonefields, Frozen Foothills,
+// Duskroad, Shattered Keep) onto one connected canvas. We keep that canvas
+// exactly as authored (WCOLS×WROWS) and embed it, centered, inside a larger
+// bordered world — bigger breathing room, nothing cut, no region swapping.
+const WCOLS=128, WROWS=160;        // mkWorld's native, unmodified footprint
+const COLS=150, ROWS=200;          // the real, bigger single world
+const WORLD_DC=Math.floor((COLS-WCOLS)/2), WORLD_DR=Math.floor((ROWS-WROWS)/2); // = 11, 20 — centering offset
 
 // World map — open world pub town feel
 // Tile types: 0=grass, 1=stone_floor, 2=wall, 3=water, 4=tree,
@@ -1600,26 +1608,26 @@ const COLS=128, ROWS=160; // portrait: taller than wide
 
 function mkWorld(){
   const g=[];
-  for(let r=0;r<ROWS;r++){ g.push([]); for(let c=0;c<COLS;c++) g[r].push(0); }
+  for(let r=0;r<WROWS;r++){ g.push([]); for(let c=0;c<WCOLS;c++) g[r].push(0); }
 
-  function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<ROWS&&c>=0&&c<COLS) g[r][c]=t; }
-  function walls(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); for(let c=c1;c<=c2;c++){if(r1>=0&&r1<ROWS){g[r1][c]=2;}if(r2>=0&&r2<ROWS){g[r2][c]=2;}} for(let r=r1;r<=r2;r++){if(c1>=0&&c1<COLS)g[r][c1]=2;if(c2>=0&&c2<COLS)g[r][c2]=2;} }
-  function door(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=5;}
-  function table(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=7;}
-  function chest(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=6;}
-  function stair(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=9;}
-  function hroad(r,c1,c2){ for(let c=c1;c<=c2;c++) if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(g[r][c]===0||g[r][c]===4||g[r][c]===10)) g[r][c]=8; }
-  function vroad(c,r1,r2){ for(let r=r1;r<=r2;r++) if(r>=0&&r<ROWS&&c>=0&&c<COLS&&(g[r][c]===0||g[r][c]===4||g[r][c]===10)) g[r][c]=8; }
+  function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<WROWS&&c>=0&&c<WCOLS) g[r][c]=t; }
+  function walls(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); for(let c=c1;c<=c2;c++){if(r1>=0&&r1<WROWS){g[r1][c]=2;}if(r2>=0&&r2<WROWS){g[r2][c]=2;}} for(let r=r1;r<=r2;r++){if(c1>=0&&c1<WCOLS)g[r][c1]=2;if(c2>=0&&c2<WCOLS)g[r][c2]=2;} }
+  function door(r,c){if(r>=0&&r<WROWS&&c>=0&&c<WCOLS)g[r][c]=5;}
+  function table(r,c){if(r>=0&&r<WROWS&&c>=0&&c<WCOLS)g[r][c]=7;}
+  function chest(r,c){if(r>=0&&r<WROWS&&c>=0&&c<WCOLS)g[r][c]=6;}
+  function stair(r,c){if(r>=0&&r<WROWS&&c>=0&&c<WCOLS)g[r][c]=9;}
+  function hroad(r,c1,c2){ for(let c=c1;c<=c2;c++) if(r>=0&&r<WROWS&&c>=0&&c<WCOLS&&(g[r][c]===0||g[r][c]===4||g[r][c]===10)) g[r][c]=8; }
+  function vroad(c,r1,r2){ for(let r=r1;r<=r2;r++) if(r>=0&&r<WROWS&&c>=0&&c<WCOLS&&(g[r][c]===0||g[r][c]===4||g[r][c]===10)) g[r][c]=8; }
   function shallow(r1,c1,r2,c2){ rect(r1,c1,r2,c2,3); }
   function deep(r1,c1,r2,c2){ rect(r1,c1,r2,c2,12); }
   function snow(r1,c1,r2,c2){ rect(r1,c1,r2,c2,10); }
   function lava(r1,c1,r2,c2){ rect(r1,c1,r2,c2,11); }
-  function tree(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS&&g[r][c]===0)g[r][c]=4;}
+  function tree(r,c){if(r>=0&&r<WROWS&&c>=0&&c<WCOLS&&g[r][c]===0)g[r][c]=4;}
   function treeRect(r1,c1,r2,c2,density){
     for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++)
-      if(Math.random()<density&&r>=0&&r<ROWS&&c>=0&&c<COLS&&g[r][c]===0) g[r][c]=4;
+      if(Math.random()<density&&r>=0&&r<WROWS&&c>=0&&c<WCOLS&&g[r][c]===0) g[r][c]=4;
   }
-  function wall(r,c){if(r>=0&&r<ROWS&&c>=0&&c<COLS)g[r][c]=2;}
+  function wall(r,c){if(r>=0&&r<WROWS&&c>=0&&c<WCOLS)g[r][c]=2;}
 
   // ═══════════════════════════════════════════════════════
   // ROADS — the arteries of the world
@@ -1826,6 +1834,7 @@ function mkWorld(){
 
   // Ember Vault entrance (sealed cave in Dragon's Spine)
   for(let r=85;r<=92;r++) for(let c=117;c<=120;c++) wall(r,c); // sealed entrance
+  g[88][117]=0; // approach tile — door was otherwise unreachable, walled on all sides
   g[88][118]=5; g[88][119]=5; // unsealed section
   stair(89,118); stair(89,119);
 
@@ -1953,6 +1962,8 @@ function mkWorld(){
   for(let r=105;r<145;r++){ g[r][57]=8;g[r][58]=8;g[r][59]=8;g[r][60]=8;g[r][61]=8; } // duskroad
   hroad(52,85,127); // marsh causeway
   hroad(85,70,100); hroad(86,70,100); // farm road
+  // Re-assert keep stairwell — the N-S spine above clips cols 58-59 at row 152
+  stair(152,57); stair(152,58); stair(152,59);
 
   // ═══════════════════════════════════════════════════════
   // SCATTERED WORLD DETAILS
@@ -1970,7 +1981,21 @@ function mkWorld(){
   return g;
 }
 
-const WORLD=mkWorld();
+function buildBigWorld(){
+  const inner = mkWorld(); // unmodified WCOLS×WROWS world, every zone intact
+  const g=[];
+  for(let r=0;r<ROWS;r++){ g.push([]); for(let c=0;c<COLS;c++) g[r].push(0); }
+  for(let r=0;r<WROWS;r++) for(let c=0;c<WCOLS;c++) g[r+WORLD_DR][c+WORLD_DC]=inner[r][c];
+  // Border dressing — the new margin reads as a forest fringe, not a void
+  for(let i=0;i<260;i++){
+    const r=1+Math.floor(Math.random()*(ROWS-2));
+    const c=1+Math.floor(Math.random()*(COLS-2));
+    const inBorder = r<WORLD_DR-1||r>=WORLD_DR+WROWS+1||c<WORLD_DC-1||c>=WORLD_DC+WCOLS+1;
+    if(inBorder && g[r][c]===0 && Math.random()<0.55) g[r][c]=4;
+  }
+  return g;
+}
+const WORLD=buildBigWorld();
 
 // Tile colors — richer palette
 const TC={
@@ -2050,7 +2075,7 @@ let activePartyTab = 'map';
 function initPlayer(){
   const c=_HERO;
   // Start player outside inn door
-  const startX=78*TS+TS/2, startY=69*TS+TS/2;
+  const startX=89*TS+TS/2, startY=89*TS+TS/2; // hub inn door, offset for the embedded world
   const spd={torvin:.9,aeryn:1.25,roland:1.05,coren:.95}[c.id]||1;
   const hp={torvin:6,aeryn:5,roland:4,coren:4}[c.id]||4;
   GS.p={
@@ -2207,6 +2232,36 @@ function spawnNPCs(){
       }
     }
   });
+  // World NPCs — every zone is live at once now (no per-region spawning)
+  const WORLD_NPCS = [
+    {id:'village_elder',name:'Elder Hosta',icon:'🏠',color:'#c8860a',x:62*64+32,y:98*64+32,facing:2,dlg:'village_elder'},
+    {id:'healer',name:'Senna',icon:'💊',color:'#e74c3c',x:77*64+32,y:98*64+32,facing:2,dlg:'healer'},
+    {id:'merchant_camp',name:'Davan the Trader',icon:'💰',color:'#f39c12',x:73*64+32,y:46*64+32,facing:2,dlg:'merchant_camp'},
+    {id:'harbormaster',name:'Old Theris',icon:'⚓',color:'#8B6914',x:97*64+32,y:37*64+32,facing:2,dlg:'harbormaster'},
+    {id:'ship_captain',name:'Captain Reyna',icon:'🚢',color:'#34495e',x:105*64+32,y:37*64+32,facing:2,dlg:'ship_captain'},
+    {id:'miller_widow',name:'Edda',icon:'🌾',color:'#e67e22',x:102*64+32,y:51*64+32,facing:2,dlg:'miller_widow'},
+    {id:'fisherman',name:'Bram',icon:'🎣',color:'#3498db',x:102*64+32,y:68*64+32,facing:2,dlg:'fisherman'},
+    {id:'soldier_kael',name:'Sergeant Kael',icon:'⚔️',color:'#95a5a6',x:104*64+32,y:91*64+32,facing:2,dlg:'soldier_kael'},
+    {id:'soldier_tam',name:'Private Tam',icon:'🛡️',color:'#7f8c8d',x:114*64+32,y:91*64+32,facing:2,dlg:'soldier_tam'},
+    {id:'farmhand',name:'Orin',icon:'🌽',color:'#f1c40f',x:110*64+32,y:100*64+32,facing:2,dlg:'farmhand'},
+    {id:'gravedigger',name:'Aldo',icon:'⚰️',color:'#636e72',x:34*64+32,y:104*64+32,facing:2,dlg:'gravedigger'},
+    {id:'lost_priest',name:'Brother Fen',icon:'✝️',color:'#dfe6e9',x:19*64+32,y:110*64+32,facing:0,dlg:'lost_priest'},
+    {id:'dwarf_brokk',name:'Brokk Ironfoot',icon:'⛏️',color:'#7f8c8d',x:18*64+32,y:68*64+32,facing:1,dlg:'dwarf_brokk'},
+    {id:'dwarf_dagni',name:'Dagni',icon:'🔨',color:'#95a5a6',x:26*64+32,y:68*64+32,facing:1,dlg:'dwarf_dagni'},
+    {id:'hermit_elder',name:'Elder Moss',icon:'🌿',color:'#27ae60',x:21*64+32,y:42*64+32,facing:2,dlg:'hermit_elder'},
+    {id:'hermit_herb',name:'Wren',icon:'🌱',color:'#2ecc71',x:18*64+32,y:54*64+32,facing:2,dlg:'hermit_herb'},
+    {id:'hermit_rune',name:'Ser Talvyn',icon:'🔮',color:'#8e44ad',x:28*64+32,y:70*64+32,facing:2,dlg:'hermit_rune'},
+  ];
+  WORLD_NPCS.forEach(n=>{
+    GS.npcs.push({
+      id:n.id,name:n.name,icon:n.icon||'?',color:n.color||'#888',
+      x:n.x,y:n.y,facing:n.facing||2,
+      hp:5,mhp:5,sz:20,spd:0,af:0,at_:0,
+      _home:{x:n.x,y:n.y,facing:n.facing||2},
+      _worldNPC:true,dlg:n.dlg
+    });
+  });
+
   GS.npcs.forEach(n=>{ n.combatMode = 'support'; n.atkCd = 0; });
   GS.sable = (_HERO&&_HERO.id==='aeryn'&&_SUB&&_SUB.id==='beastmaster') ? {
     x:GS.p.x-16, y:GS.p.y-30,
@@ -2224,28 +2279,37 @@ function spawnNPCs(){
 
   GS.enemies=[
     // Thornwood — slimes and basic skeletons (near inn, lower difficulty)
-    {type:'slime',   x:25*TS,y:25*TS,hp:2,mhp:2,dmg:1,spd:1.0,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:30*TS,y:30*TS,hp:2,mhp:2,dmg:1,spd:1.0,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:18*TS,y:40*TS,hp:3,mhp:3,dmg:1,spd:1.1,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:36*TS,y:45*TS,hp:2,mhp:2,dmg:1,spd:1.0,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:41*TS,y:50*TS,hp:2,mhp:2,dmg:1,spd:1.0,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:29*TS,y:60*TS,hp:3,mhp:3,dmg:1,spd:1.1,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
     // Highland moors — skeleton patrols
-    {type:'skeleton',x:70*TS,y:15*TS,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:80*TS,y:20*TS,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:81*TS,y:35*TS,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:91*TS,y:40*TS,hp:4,mhp:4,dmg:1,spd:1.2,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
     // Southeast slime flats — irrigation ditches
-    {type:'slime',   x:92*TS,y:87*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:96*TS,y:90*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
-    {type:'slime',   x:90*TS,y:92*TS,hp:4,mhp:4,dmg:1,spd:1.3,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:103*TS,y:107*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:107*TS,y:110*TS,hp:3,mhp:3,dmg:1,spd:1.2,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:101*TS,y:112*TS,hp:4,mhp:4,dmg:1,spd:1.3,sz:18,ar:22,color:'#1e8449',hf:0,ac:0,af:0,at_:0},
     // Bonefields — southwest graveyard
-    {type:'skeleton',x:8*TS, y:80*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:15*TS,y:85*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:5*TS, y:95*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:20*TS,y:100*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:19*TS, y:100*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:26*TS,y:105*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:16*TS, y:115*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:31*TS,y:120*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
     // Duskroad — corridor guards
-    {type:'skeleton',x:58*TS,y:108*TS,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:59*TS,y:115*TS,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:69*TS,y:128*TS,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:70*TS,y:135*TS,hp:7,mhp:7,dmg:2,spd:1.6,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
     // Keep courtyard — elite guards
-    {type:'skeleton',x:55*TS,y:140*TS,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:63*TS,y:140*TS,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
-    {type:'skeleton',x:58*TS,y:145*TS,hp:12,mhp:12,dmg:4,spd:1.8,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:66*TS,y:160*TS,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:74*TS,y:160*TS,hp:10,mhp:10,dmg:3,spd:1.7,sz:18,ar:26,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:69*TS,y:165*TS,hp:12,mhp:12,dmg:4,spd:1.8,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0},
+    // Millhaven Wetlands — marsh slimes
+    {type:'slime',   x:111*TS,y:68*TS,hp:3,mhp:3,dmg:1,spd:1.0,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    {type:'slime',   x:126*TS,y:70*TS,hp:3,mhp:3,dmg:1,spd:1.0,sz:18,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0},
+    // Ash Plains — outpost skeletons
+    {type:'skeleton',x:106*TS,y:85*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:116*TS,y:100*TS,hp:6,mhp:6,dmg:2,spd:1.5,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0},
+    // Frozen Foothills — dwarven road skeletons
+    {type:'skeleton',x:21*TS,y:70*TS,hp:5,mhp:5,dmg:2,spd:1.3,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
+    {type:'skeleton',x:26*TS,y:85*TS,hp:5,mhp:5,dmg:2,spd:1.4,sz:16,ar:24,color:'#bdc3c7',hf:0,ac:0,af:0,at_:0},
   ];
 }
 
@@ -4940,21 +5004,24 @@ function checkStairs(){
 function findDungeonEntry(r, c){
   // Map stair positions to dungeon IDs
   const STAIR_MAP = {
+    // ── mkWorld stairs, shifted by the embed offset (WORLD_DR=20, WORLD_DC=11) ──
+    '112,21':'catacombs','112,22':'catacombs',
+    '71,42':'rootvault','71,43':'rootvault',
+    '51,123':'drowned_archive','51,124':'drowned_archive',
+    '102,100':'saltmine','102,101':'saltmine',
+    '42,85':'hollow_stones','42,86':'hollow_stones',
+    '109,129':'ember_vault','109,130':'ember_vault',
+    '84,19':'frost_vaults','84,20':'frost_vaults','84,21':'frost_vaults',
+    '172,68':'shattered_keep','172,69':'shattered_keep','172,70':'shattered_keep',
+    '168,82':'keep_east_wing','168,83':'keep_east_wing',
+    // ── dormant — coordinates from the retired satellite regions, unreachable now ──
     '25,17':'catacombs','25,18':'catacombs', // sw_bonefields region
-    '92,10':'catacombs','92,11':'catacombs', // center region
     '148,57':'shattered_keep','148,58':'shattered_keep','148,59':'shattered_keep', // south region keep
     '132,83':'keep_east_wing','132,84':'keep_east_wing', // south region east wing
     '13,11':'rootvault','13,12':'rootvault','13,13':'rootvault', // rootvault_region
-    '51,31':'rootvault','51,32':'rootvault', // center region
     '47,101':'drowned_archive','47,102':'drowned_archive','47,103':'drowned_archive', // drowned_region
     '25,73':'saltmine','25,74':'saltmine','25,75':'saltmine', // se_farmlands
-    '22,74':'hollow_stones','22,75':'hollow_stones',
-    '31,112':'drowned_archive','31,113':'drowned_archive',
-    '89,118':'ember_vault','89,119':'ember_vault',
-    '82,89':'saltmine','82,90':'saltmine',
-    '64,8':'frost_vaults','64,9':'frost_vaults','64,10':'frost_vaults',
-    '152,57':'shattered_keep','152,58':'shattered_keep','152,59':'shattered_keep',
-    '148,71':'keep_east_wing','148,72':'keep_east_wing',
+    '64,8':'frost_vaults','64,9':'frost_vaults','64,10':'frost_vaults', // unshifted dupe, harmless
   };
   return STAIR_MAP[r+','+c]||null;
 }
@@ -5102,7 +5169,7 @@ function innChestEvent(r, c){
   const regionId = getRegionId(REGION_X, REGION_Y);
   if(regionId !== 'center') return;
   // Either inn chest gives the catacombs key (only once)
-  if((r===66&&(c===76||c===81)) && !(INVENTORY['key_catacombs']>0)){
+  if((r===86&&(c===87||c===92)) && !(INVENTORY['key_catacombs']>0)){
     INVENTORY['key_catacombs'] = 1;
     const item = KEY_ITEMS['key_catacombs'];
     setTimeout(()=>{
@@ -5155,6 +5222,7 @@ let _regionTransitioning = false;
 const REGION_EDGE = 2;
 
 function checkRegionEdge(){
+  return; // single unified world — region swapping retired, logic kept below for reference
   if(!GS.p || _regionTransitioning || _dungeon_fading) return;
   const px = Math.floor(GS.p.x/TS);
   const py = Math.floor(GS.p.y/TS);
@@ -5210,11 +5278,26 @@ function travelToRegion(nx, ny, dx, dy){
     // Swap WORLD — reassign the global
     for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) WORLD[r][c]=newWorld[r]?newWorld[r][c]||0:0;
 
-    // Place player at opposite edge
-    if(dx===1)  GS.p.x = (REGION_EDGE+1)*TS+TS/2;        // came from west, place east→west entry
-    if(dx===-1) GS.p.x = (COLS-REGION_EDGE-2)*TS+TS/2;   // came from east
-    if(dy===1)  GS.p.y = (REGION_EDGE+1)*TS+TS/2;
-    if(dy===-1) GS.p.y = (ROWS-REGION_EDGE-2)*TS+TS/2;
+    // Place player at opposite edge — preserve perpendicular position
+    const _saveX = GS.p.x, _saveY = GS.p.y;
+    if(dx===1){  GS.p.x = (REGION_EDGE+1)*TS+TS/2; GS.p.y = _saveY; }
+    if(dx===-1){ GS.p.x = (COLS-REGION_EDGE-2)*TS+TS/2; GS.p.y = _saveY; }
+    if(dy===1){  GS.p.y = (REGION_EDGE+1)*TS+TS/2; GS.p.x = _saveX; }
+    if(dy===-1){ GS.p.y = (ROWS-REGION_EDGE-2)*TS+TS/2; GS.p.x = _saveX; }
+    // Clamp to safe floor tile — avoid spawning in walls
+    const _w2=newWorld; const _pc=Math.floor(GS.p.x/TS), _pr=Math.floor(GS.p.y/TS);
+    if(_w2&&_w2[_pr]&&_w2[_pr][_pc]===2){
+      // On a wall — scan nearby for open floor
+      let found=false;
+      for(let _d=1;_d<8&&!found;_d++){
+        const checks=[[_pr,_pc+_d],[_pr,_pc-_d],[_pr+_d,_pc],[_pr-_d,_pc]];
+        for(const [rr,cc] of checks){
+          if(_w2[rr]&&(_w2[rr][cc]===0||_w2[rr][cc]===1||_w2[rr][cc]===8)){
+            GS.p.x=cc*TS+TS/2; GS.p.y=rr*TS+TS/2; found=true; break;
+          }
+        }
+      }
+    }
     // Keep perpendicular position
     if(dx!==0 && dy===0){ /* keep py */ }
     if(dy!==0 && dx===0){ /* keep px */ }
@@ -7658,8 +7741,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 // ── SHOP PROXIMITY POSITIONS ──
-const GREYPOST_POS = { x:44*64+32, y:53*64+32 };
-const HARWICKS_POS = { x:76*64+32, y:82*64+32 };
+const GREYPOST_POS = { x:55*64+32, y:73*64+32 };
+const HARWICKS_POS = { x:87*64+32, y:102*64+32 };
 const SHOP_RANGE = 80;
 
 // ── WEAPON DISPLAY INFO ──

@@ -2115,6 +2115,13 @@ function startGame(){
   updateToolSlot();
   // Roland always shares map with party
   PARTY.tools.roland = ECONOMY.owned['roland_map_1'] ? 'roland_map_1' : null;
+  // Campaign kickoff — the driver, delivered once the world settles
+  if(!window._fourSealsIntroShown){
+    window._fourSealsIntroShown = true;
+    setTimeout(()=>{
+      if(GS.running && !dlgOpen) showQuestNotif(QUESTS.four_seals);
+    }, 5500);
+  }
   _lastActionCtx = ''; // force ATK button refresh
   _lastWeaponIcon = '';
   updateActionBtn();
@@ -2446,7 +2453,8 @@ function update(dt){
   const moving=dx!==0||dy!==0;
   if(dx&&dy){dx*=.707;dy*=.707;}
 
-  const _wt=WORLD[Math.floor(GS.p.y/TS)]&&WORLD[Math.floor(GS.p.y/TS)][Math.floor(GS.p.x/TS)];
+  const _cw2=currentWorld();
+  const _wt=_cw2[Math.floor(GS.p.y/TS)]&&_cw2[Math.floor(GS.p.y/TS)][Math.floor(GS.p.x/TS)];
   const spd=p.spd*(_wt===12?0.15:_wt===3?0.45:_wt===10?0.7:1)*dt;
   if(dx){
     p.x+=dx*spd;
@@ -2569,6 +2577,7 @@ function update(dt){
     }
   }
   checkStairs();
+  checkAreaLabel();
   checkLockedDoors();
   checkRegionEdge();
   checkNPCProximity();
@@ -3151,6 +3160,25 @@ function drawTile(ctx,t,x,y,r,c){
     ctx.fillStyle='#243814';
     if((r*COLS+c)%3===0)ctx.fillRect(x+8,y+14,3,3);
     if((r*COLS+c)%5===1)ctx.fillRect(x+32,y+6,2,3);
+    // Wildflowers — sparse, deterministic, hand-scattered feel
+    const _h=(r*7349+c*911)%97;
+    if(_h===13){ // clover white
+      ctx.fillStyle='#c9cba3';ctx.fillRect(x+38,y+22,3,3);ctx.fillRect(x+41,y+25,2,2);
+      ctx.fillStyle='#2c4a18';ctx.fillRect(x+39,y+25,2,7);
+    } else if(_h===41){ // marsh gold
+      ctx.fillStyle='#c8a24a';ctx.fillRect(x+14,y+30,4,4);
+      ctx.fillStyle='#8a6a20';ctx.fillRect(x+15,y+31,2,2);
+      ctx.fillStyle='#2c4a18';ctx.fillRect(x+15,y+34,2,8);
+    } else if(_h===67){ // dusk violet
+      ctx.fillStyle='#7c6a9c';ctx.fillRect(x+44,y+40,3,3);ctx.fillRect(x+47,y+43,2,2);
+      ctx.fillStyle='#2c4a18';ctx.fillRect(x+45,y+43,2,7);
+    } else if(_h===88){ // field stone
+      ctx.fillStyle='#3a3830';ctx.fillRect(x+22,y+38,7,5);
+      ctx.fillStyle='#48453a';ctx.fillRect(x+23,y+38,4,2);
+    } else if(_h===29){ // tall seed grass
+      ctx.fillStyle='#3d5220';ctx.fillRect(x+52,y+14,2,14);ctx.fillRect(x+49,y+18,2,10);
+      ctx.fillStyle='#5a6e30';ctx.fillRect(x+51,y+12,4,3);
+    }
   }
   else if(t===8){ // ROAD
     ctx.fillStyle='#2e2620';ctx.fillRect(x,y,TS,TS);
@@ -4104,6 +4132,40 @@ function showLbl(txt){
   window._lblT=setTimeout(()=>el.classList.remove('on'),2500);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// NAMED REGIONS — the world announces itself as you cross it.
+// Zones in big-world tile coords [r1,c1,r2,c2]. First match wins;
+// order specific → general.
+// ═══════════════════════════════════════════════════════════════
+const AREA_LABELS = [
+  {name:"GREYPORT HARBOR",        r1:28,  c1:95,  r2:42,  c2:130},
+  {name:"THE DROWNED COAST",      r1:38,  c1:105, r2:62,  c2:135},
+  {name:"THE HOLLOW MOOR",        r1:36,  c1:70,  r2:56,  c2:100},
+  {name:"THE HERMIT WOODS",       r1:34,  c1:5,   r2:74,  c2:38},
+  {name:"FROSTFIELD",             r1:75,  c1:5,   r2:96,  c2:32},
+  {name:"VAELTHAR'S CROSSING",    r1:78,  c1:50,  r2:104, c2:96},
+  {name:"THE SALT FLATS",         r1:92,  c1:97,  r2:116, c2:132},
+  {name:"THE BONEFIELDS",         r1:96,  c1:5,   r2:126, c2:44},
+  {name:"THE ASH PLAINS",         r1:58,  c1:100, r2:92,  c2:135},
+  {name:"THE DUSKROAD",           r1:126, c1:38,  r2:162, c2:96},
+  {name:"THE SHATTERED KEEP",     r1:162, c1:40,  r2:190, c2:100},
+];
+let _currentArea = null;
+function checkAreaLabel(){
+  if(!GS.p || DUNGEON || _dungeon_fading) return;
+  const pr=Math.floor(GS.p.y/TS), pc=Math.floor(GS.p.x/TS);
+  let found=null;
+  for(const a of AREA_LABELS){
+    if(pr>=a.r1&&pr<=a.r2&&pc>=a.c1&&pc<=a.c2){ found=a.name; break; }
+  }
+  if(found && found!==_currentArea){
+    _currentArea=found;
+    showLbl(found);
+  } else if(!found){
+    _currentArea=null;
+  }
+}
+
 // ─── INPUT ───
 let _keysSetup=false;
 function setupKeys(){
@@ -4125,7 +4187,7 @@ function setupKeys(){
     if(e.code==='KeyM'||e.code==='Tab') { e.preventDefault(); openPartyScreen('map'); return; }
     if(e.code==='KeyE'||e.code==='KeyF') {
       if(nearChest&&!openedChests.has(nearChest.r+','+nearChest.c)){ openChest(nearChest.r,nearChest.c); return; }
-      if(window._nearShop&&!dlgOpen&&!activeShop){ openShop(window._nearShop); return; }
+      if(window._nearShop&&!dlgOpen&&!activeShop){ shopkeeperTalk(window._nearShop); return; }
       if(nearNPC&&!dlgOpen){ openDlg(nearNPC.id); return; }
       atk(); return;
     }
@@ -4209,7 +4271,8 @@ function checkNPCProximity(){
     prompt.classList.add('on');
   } else if(nearNPC && !dlgOpen){
     const char = CHARACTERS.find(c=>c.id===nearNPC.id);
-    prompt.textContent = `E · TALK TO ${(char?char.name:'???').toUpperCase()}`;
+    const nm = char ? char.name : (nearNPC.name || '???');
+    prompt.textContent = `E · TALK TO ${nm.toUpperCase()}`;
     prompt.classList.add('on');
   } else {
     prompt.classList.remove('on');
@@ -4975,6 +5038,64 @@ const WORLD_DLG = {
       ]
     }
   },
+
+  // ── SHOPKEEPERS ──
+  healer: {
+    color:'#e74c3c',
+    greeting:{ text:`"Sit. You're bleeding on my step."`,
+      subtext:`She says it before she's even turned around.`,
+      choices:[
+        { text:`"How did you know?"`, reply:`"Everyone who knocks on this door is bleeding somewhere. Thirty years of practice."`, back:'investigate' },
+        { text:`"Can you treat us?"`, heal:true, reply:`"Hold still."`, subtext:`Her hands are quick and certain. The pain goes out like a candle.`, back:'investigate' },
+      ]
+    },
+    investigate:{ text:`"You're the ones going south. The village has decided you're either heroes or fools. I stitch both the same."`,
+      choices:[
+        { text:`"Can you treat us?"`, heal:true, reply:`"Hold still."`, subtext:`Warmth spreads from her palms. Good as new — or near enough.`, back:'investigate' },
+        { text:`"Were you here when the keep closed?"`, reply:`"I was six. My mother treated the ones who came back from the gate that night. She never said what she saw on them. She stopped sleeping with the window open."`, back:'investigate' },
+        { text:`"What do you know about the Vaen family?"`, reply:`"The scholars? Kind people. The mother brought the children here once — fever season. Two little ones and a baby not yet walking."`, subtext:`She pauses. "The baby would be about your mage's age now."`, delta_coren:+8, back:'investigate' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  maret: {
+    color:'#8B6914',
+    greeting:{ text:`"Well. Customers. Actual customers, with actual coin, walking the actual road."`,
+      subtext:`She's already reweighing a sack of something without looking at it.`,
+      choices:[
+        { text:`"You sound surprised."`, reply:`"Thirty years on a dead road, I stopped stocking surprise. Everything else, I have."`, back:'trade_hub' },
+        { text:`"Let's see your stock."`, trade:'greypost' },
+      ]
+    },
+    trade_hub:{ text:`"Buying, selling, or asking? I charge for two of those."`,
+      choices:[
+        { text:`"Let's trade."`, trade:'greypost' },
+        { text:`"Why keep a post on a dead road?"`, reply:`"Because roads don't stay dead. My mother ran this post. Her mother opened it — the year the keep sealed. Somebody had to feed the people who kept waiting."`, subtext:`She finally looks up.`, back:'trade_hub' },
+        { text:`"What do you hear from travelers?"`, reply:`"Lately? Sounds under the ground. Lights on the north water. And four fools heading for the keep — that'll be you."`, back:'trade_hub' },
+        { text:`"Anything you won't sell?"`, reply:`"The ledger. My grandmother wrote the first page the night the road died. When the keep opens, I finish the book."`, back:'trade_hub' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
+  harwick: {
+    color:'#c8860a',
+    greeting:{ text:`"Hah! I know that walk. Seekers. Come in, mind the sparks."`,
+      subtext:`The forge is lit. It's clearly always lit.`,
+      choices:[
+        { text:`"You know Torvin?"`, reply:`"Know him! I reforged his father's axe-collar before the beard came in. Don't tell him I said that — good taste in axes, terrible taste in gratitude."`, delta_torvin:+5, back:'trade_hub' },
+        { text:`"Show me the iron."`, trade:'harwicks' },
+      ]
+    },
+    trade_hub:{ text:`"So. Steel, or stories? I'm dangerous with both."`,
+      choices:[
+        { text:`"Let's trade."`, trade:'harwicks' },
+        { text:`"Where does your iron come from?"`, reply:`"Saltmine dwarves, back when the deep galleries ran. Best ore in the valley — then they sealed gallery nine and the good vein with it. Whatever they shut in, they thought it was worth the ore."`, back:'trade_hub' },
+        { text:`"Have you forged for seekers before?"`, reply:`"Every few years someone heads south with my steel. None came back to complain."`, subtext:`He pauses. "None came back."`, back:'trade_hub' },
+        { text:`"What would you ask of the keep?"`, reply:`"My grandfather's hammer is in there. Left it the night the gates shut — he was fitting hinges. Bring it back and your next blade is free."`, back:'trade_hub' },
+        { text:`"[Leave]"`, exit:true },
+      ]
+    }
+  },
 };
 
 
@@ -5040,9 +5161,17 @@ function renderFade(ctx, VW, VH){
 function enterDungeon(dungeonId){
   const def = DUNGEONS[dungeonId];
   if(!def||!def.cols){
-    // Dungeon entrance exists but interior not yet built
-    showDungeonTitle('Sealed', 'This entrance is impassable.');
-    showBuyFlash('The way is sealed. Perhaps later.');
+    // Dungeon entrance exists but interior not yet built — themed flavor
+    const SEALED_LINES = {
+      hollow_stones: ['The Hollow Stones','The stones are singing. The way down is not open — yet.'],
+      ember_vault:   ['The Ember Vault','Heat breathes up through the seam. The forge below is not done with itself.'],
+      frost_vaults:  ['The Frost Vaults','Dwarven seal-work, unbroken. Dagni was telling the truth.'],
+      shattered_keep:['The Shattered Keep','The gate knows you. It is not ready. Four seals hold it shut.'],
+      keep_east_wing:['The East Wing','Something on the other side of this door is listening.'],
+    };
+    const line = SEALED_LINES[dungeonId] || ['Sealed','This entrance is impassable.'];
+    showDungeonTitle(line[0], line[1]);
+    showBuyFlash('The way is sealed.');
     return;
   }
   _overworld_state = {
@@ -5074,10 +5203,27 @@ function enterDungeon(dungeonId){
     showDungeonTitle(def.name, def.subtitle);
     GS.cam.x = GS.p.x - VW/2;
     GS.cam.y = GS.p.y - VH/2;
+    // Activate the matching seal quest on first descent
+    const sealQuestId = {catacombs:'seal_catacombs',rootvault:'seal_rootvault',saltmine:'seal_saltmine',drowned_archive:'seal_drowned'}[dungeonId];
+    if(sealQuestId && QUESTS[sealQuestId] && QUESTS[sealQuestId].status==='hidden'){
+      setTimeout(()=>activateQuest(sealQuestId), 3200);
+    }
     if(dungeonId==='catacombs'){
       changeApproval('torvin', +5);
       if(_HERO&&_HERO.id!=='torvin')
         setTimeout(()=>showBuyFlash('Torvin nods as you descend.'), 3500);
+    }
+    if(dungeonId==='rootvault'){
+      changeApproval('coren', +5);
+      setTimeout(()=>showBuyFlash('The air hums. Coren\'s egg answers, faintly.'), 3500);
+    }
+    if(dungeonId==='saltmine'){
+      changeApproval('torvin', +8);
+      setTimeout(()=>showBuyFlash('Torvin runs a hand along the cut stone. \"Good work. Old work.\"'), 3500);
+    }
+    if(dungeonId==='drowned_archive'){
+      changeApproval('roland', +8);
+      setTimeout(()=>showBuyFlash('Roland is already reading the walls.'), 3500);
     }
     startFade(-1, null);
   });
@@ -5189,7 +5335,7 @@ const DUNGEONS = {
       {type:'skeleton',x:8*64+32,y:24*64+32,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0,_dungeon:true},
       {type:'skeleton',x:19*64+32,y:22*64+32,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0,_dungeon:true},
       {type:'skeleton',x:30*64+32,y:25*64+32,hp:6,mhp:6,dmg:2,spd:1.4,sz:16,ar:24,color:'#95a5a6',hf:0,ac:0,af:0,at_:0,_dungeon:true},
-      {type:'skeleton',x:12*64+32,y:30*64+32,hp:7,mhp:7,dmg:2,spd:1.5,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:12*64+32,y:21*64+32,hp:7,mhp:7,dmg:2,spd:1.5,sz:16,ar:24,color:'#7f8c8d',hf:0,ac:0,af:0,at_:0,_dungeon:true},
       // Floor 3 — the name chamber
       {type:'skeleton',x:15*64+32,y:40*64+32,hp:8,mhp:8,dmg:3,spd:1.5,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0,_dungeon:true},
       {type:'skeleton',x:23*64+32,y:42*64+32,hp:8,mhp:8,dmg:3,spd:1.5,sz:18,ar:26,color:'#636e72',hf:0,ac:0,af:0,at_:0,_dungeon:true},
@@ -5294,11 +5440,318 @@ const DUNGEONS = {
   },
 
   // Placeholder entries for other dungeons (no buildWorld yet)
-  rootvault:{ name:'The Rootvault', subtitle:'Ancient Growth', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  // ═══════════════════════════════════════════════════════════
+  // THE ROOTVAULT — second seal (NW)
+  // Living root labyrinth. The land's memory. Nothing here is
+  // built — it grew, and it grew around something.
+  // Theme tiles: grass floors, tree tiles as solid root masses,
+  // water pools. Slime-heavy.
+  // ═══════════════════════════════════════════════════════════
+  rootvault: {
+    name: 'The Rootvault',
+    subtitle: 'What the Land Remembers',
+    cols: 42, rows: 52,
+    spawnX: 20, spawnY: 2,
+    enemies: [
+      // Upper growth — young slimes
+      {type:'slime',x:12*64+32,y:9*64+32,hp:6,mhp:6,dmg:2,spd:1.1,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:29*64+32,y:9*64+32,hp:6,mhp:6,dmg:2,spd:1.1,sz:16,ar:22,color:'#27ae60',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // The winding — older growth
+      {type:'slime',x:8*64+32,y:20*64+32,hp:7,mhp:7,dmg:2,spd:1.2,sz:17,ar:23,color:'#229954',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:20*64+32,y:24*64+32,hp:7,mhp:7,dmg:2,spd:1.2,sz:17,ar:23,color:'#229954',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:33*64+32,y:21*64+32,hp:7,mhp:7,dmg:3,spd:1.2,sz:17,ar:23,color:'#229954',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:14*64+32,y:30*64+32,hp:8,mhp:8,dmg:3,spd:1.4,sz:16,ar:24,color:'#7d8471',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // root-bound seeker who never left
+      {type:'slime',x:27*64+32,y:32*64+32,hp:8,mhp:8,dmg:3,spd:1.3,sz:18,ar:24,color:'#1e8449',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // Heart chamber — the vault's own
+      {type:'slime',x:15*64+32,y:44*64+32,hp:9,mhp:9,dmg:3,spd:1.3,sz:19,ar:25,color:'#145a32',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:26*64+32,y:44*64+32,hp:9,mhp:9,dmg:3,spd:1.3,sz:19,ar:25,color:'#145a32',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:20*64+32,y:47*64+32,hp:12,mhp:12,dmg:4,spd:1.4,sz:22,ar:28,color:'#0e4429',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // heartguard
+    ],
+    buildWorld(){
+      const DCOLS=42, DROWS=52;
+      const g=[];
+      for(let r=0;r<DROWS;r++){ g.push([]); for(let c=0;c<DCOLS;c++) g[r].push(2); } // all walls
+      function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=t; }
+      function room(r1,c1,r2,c2){ rect(r1,c1,r2,c2,0); } // grass floors — living ground
+      function stoneroom(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); }
+      function t(r,c,tile){ if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=tile; }
+      function root(r,c){ t(r,c,4); } // solid root mass
+
+      // ── ENTRY: THE THROAT (rows 0-12) ──
+      stoneroom(0,18,2,23);
+      t(1,20,9); t(1,21,9); // exit stairs back up
+
+      // Root antechamber — wide, organic
+      room(3,6,12,35);
+      // Root columns growing through the floor — irregular
+      root(5,10);root(6,10);root(5,11);
+      root(5,30);root(6,31);root(5,31);
+      root(9,14);root(10,14);root(10,15);
+      root(9,27);root(10,27);root(9,26);
+      root(11,20);root(11,21); // split the way south
+      t(4,20,7); t(4,21,7); // grown-over inscription: the vault greets you
+      t(11,7,6);  // early chest, tucked in roots
+      root(11,6);root(12,7);
+
+      // ── THE WINDING (rows 13-36) — three grown paths ──
+      // West pool run
+      room(13,4,22,14);
+      rect(16,6,20,11,3); // shallow root-water pool
+      root(14,9);root(15,13);root(21,5);
+      t(18,4,7); // pool-side inscription
+      t(22,13,6); // chest across the water
+
+      // Center throatway — narrow, root-pinched
+      room(13,18,26,23);
+      root(15,18);root(15,23);
+      root(19,19);root(19,22);
+      root(23,18);root(23,23);
+      t(21,20,7); // inscription: the land's grievance
+
+      // East gallery
+      room(13,27,22,38);
+      root(15,32);root(16,33);root(15,33);
+      root(20,29);root(20,30);
+      t(14,37,6); // chest
+      rect(18,34,21,37,3); // eastern seep pool
+
+      // Cross-links — grown corridors
+      room(22,8,25,18);   // west→center link
+      room(20,23,23,28);  // center→east link
+
+      // The old seeker's camp — someone tried before
+      room(27,10,33,30);
+      t(28,12,7); // bedroll remains (readable)
+      t(28,14,6); // his pack — chest
+      root(29,17);root(29,24);root(31,20);root(31,21);
+      root(27,27);root(28,28);
+      t(32,29,7); // scratched warning
+
+      // Descent to the heart
+      room(33,18,39,23);
+      root(35,18);root(37,23);
+      t(36,20,7); // threshold inscription
+
+      // ── THE HEART CHAMBER (rows 40-51) ──
+      room(40,6,51,35);
+      // The Great Root — a ring of living wood around the center
+      [[43,17],[42,19],[42,22],[43,24],[45,26],[47,25],[48,22],[48,19],[47,16],[45,15]].forEach(([r,c])=>root(r,c));
+      // Heart pool — the vault's waters
+      rect(44,19,46,22,3);
+      // Wall inscriptions — the land's memory, carved by no hand
+      for(let c=8;c<=33;c+=3) t(41,c,7);
+      for(let r=43;r<=49;r+=2){ t(r,7,7); t(r,34,7); }
+      // Flanking chests
+      t(50,8,6); t(50,33,6);
+      // THE SEAL CHEST — center-south of the great root
+      t(49,20,6); // → key_saltmine + revelation
+      // Shortcut exit — a root-torn gap west
+      stoneroom(44,1,48,5);
+      t(46,2,9); t(47,2,9);
+      return g;
+    }
+  },
   hollow_stones:{ name:'The Hollow Stones', subtitle:'Beneath the Moor', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
-  drowned_archive:{ name:'The Drowned Archive', subtitle:'Cold Preservation', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  // ═══════════════════════════════════════════════════════════
+  // THE DROWNED ARCHIVE — fourth seal (NE)
+  // The keep's records, kept cold and wet for thirty years.
+  // Wading slows you; deep channels nearly stop you. The
+  // stacks are still standing. The ship's cargo made it here.
+  // Theme tiles: stone floors under shallow water, deep
+  // channels, table tiles as shelf stacks. Skeletons.
+  // ═══════════════════════════════════════════════════════════
+  drowned_archive: {
+    name: 'The Drowned Archive',
+    subtitle: 'Cold Preservation',
+    cols: 44, rows: 52,
+    spawnX: 21, spawnY: 2,
+    enemies: [
+      // The reading room — quiet company
+      {type:'skeleton',x:11*64+32,y:10*64+32,hp:10,mhp:10,dmg:4,spd:1.4,sz:17,ar:25,color:'#85929e',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:31*64+32,y:10*64+32,hp:10,mhp:10,dmg:4,spd:1.4,sz:17,ar:25,color:'#85929e',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // The stacks — they wade faster than you
+      {type:'slime',x:9*64+32,y:21*64+32,hp:10,mhp:10,dmg:4,spd:1.3,sz:18,ar:24,color:'#5499c7',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // tide slime
+      {type:'slime',x:34*64+32,y:21*64+32,hp:10,mhp:10,dmg:4,spd:1.3,sz:18,ar:24,color:'#5499c7',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:21*64+32,y:25*64+32,hp:11,mhp:11,dmg:4,spd:1.5,sz:18,ar:26,color:'#707b7c',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:14*64+32,y:31*64+32,hp:11,mhp:11,dmg:4,spd:1.5,sz:18,ar:26,color:'#707b7c',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:28*64+32,y:33*64+32,hp:11,mhp:11,dmg:4,spd:1.4,sz:19,ar:25,color:'#2e86c1',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // The vault — the archivists stayed with the collection
+      {type:'skeleton',x:14*64+32,y:44*64+32,hp:12,mhp:12,dmg:5,spd:1.5,sz:19,ar:27,color:'#5d6d7e',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:28*64+32,y:44*64+32,hp:12,mhp:12,dmg:5,spd:1.5,sz:19,ar:27,color:'#5d6d7e',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:21*64+32,y:47*64+32,hp:14,mhp:14,dmg:5,spd:1.6,sz:21,ar:29,color:'#2c3e50',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // the head archivist
+    ],
+    buildWorld(){
+      const DCOLS=44, DROWS=52;
+      const g=[];
+      for(let r=0;r<DROWS;r++){ g.push([]); for(let c=0;c<DCOLS;c++) g[r].push(2); }
+      function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=t; }
+      function room(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); }
+      function flood(r1,c1,r2,c2){ rect(r1,c1,r2,c2,3); }  // wading — slow
+      function deepc(r1,c1,r2,c2){ rect(r1,c1,r2,c2,12); } // deep channel — nearly stops you
+      function t(r,c,tile){ if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=tile; }
+      function stack(r,c1,c2){ for(let c=c1;c<=c2;c++) t(r,c,7); } // shelf stack — solid, readable
+
+      // ── THE LANDING (rows 0-13) — still dry ──
+      room(0,19,2,24);
+      t(1,21,9); t(1,22,9); // exit stairs
+
+      // Reading room — the last dry floor
+      room(3,7,13,36);
+      // Reading tables in ordered rows (dwarves mine straight; archivists shelve straight)
+      stack(5,10,15); stack(5,28,33);
+      stack(8,10,15); stack(8,28,33);
+      t(6,21,7); t(7,21,7); // the catalogue desk — first revelation clue
+      t(12,8,6); t(12,35,6); // satchel chests
+      // Water begins at the south door — a visible line
+      flood(12,18,13,25);
+
+      // ── THE STACKS (rows 14-37) — flooded aisles ──
+      room(14,4,37,39);
+      flood(14,4,37,39); // the whole floor is under water
+      // Long shelf stacks forming aisles — north-south reading lanes
+      for(let c=7;c<=36;c+=4){
+        for(let r=16;r<=25;r++) if(r%5!==0) t(r,c,7); // gaps every 5th row let you cross
+      }
+      for(let c=9;c<=34;c+=4){
+        for(let r=28;r<=35;r++) if(r%4!==0) t(r,c,7);
+      }
+      // Dry reading islands — raised stone, safe footing
+      room(19,19,21,24); t(20,21,7); t(20,22,7); // island desk: the shipping manifest
+      room(31,15,33,19); t(32,17,6);              // island chest
+      room(31,26,33,30); t(32,28,7);              // island desk: the harbor log
+      // THE DEEP CHANNEL — the flooded stair the ship's cargo was carried down
+      deepc(26,5,27,38); // crossing it is a commitment
+      // Sunken crates along the channel — the cargo trail
+      t(26,12,6); t(27,30,6); // waterlogged cargo chests
+
+      // ── THE VAULT (rows 38-51) — cold preservation ──
+      room(38,18,40,25); // vault approach — dry again, the archivists kept it sealed
+      room(41,7,51,36);
+      // The preserved collection — shelf ring
+      stack(42,10,18); stack(42,25,33);
+      stack(50,10,18); stack(50,25,33);
+      for(let r=44;r<=48;r+=2){ t(r,8,7); t(r,35,7); }
+      // THE VAEN RESEARCH — the second-egg revelation
+      t(45,34,6); // chest against the east shelf wall
+      // Head archivist's desk
+      t(44,21,7); t(44,22,7);
+      // Flanking chests
+      t(49,9,6); t(49,34,6);
+      // THE SEAL CHEST — the Keep Master Key
+      t(49,21,6); // → key_keep (+ key_frost bonus)
+      // Shortcut out — the old delivery ramp, west
+      room(44,1,48,6);
+      t(45,2,9); t(46,2,9);
+      return g;
+    }
+  },
   ember_vault:{ name:'The Ember Vault', subtitle:'The Forge Below', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
-  saltmine:{ name:'The Saltmine', subtitle:'Dwarven Deep', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
+  // ═══════════════════════════════════════════════════════════
+  // THE SALTMINE — third seal (SE)
+  // Dwarven work: rail-straight galleries, pillared halls,
+  // salt-crystal floors. The dwarves sealed their own lowest
+  // gallery before the keep ever closed. Brokk's father held
+  // the last shift.
+  // Theme tiles: stone floors, road tiles as cart rails,
+  // snow tiles as salt-crystal beds. Skeleton miners.
+  // ═══════════════════════════════════════════════════════════
+  saltmine: {
+    name: 'The Saltmine',
+    subtitle: 'The Dwarven Deep',
+    cols: 46, rows: 54,
+    spawnX: 22, spawnY: 2,
+    enemies: [
+      // Upper gallery — the day shift
+      {type:'skeleton',x:10*64+32,y:10*64+32,hp:8,mhp:8,dmg:3,spd:1.4,sz:16,ar:24,color:'#aab7b8',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:34*64+32,y:10*64+32,hp:8,mhp:8,dmg:3,spd:1.4,sz:16,ar:24,color:'#aab7b8',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // Crystal halls
+      {type:'skeleton',x:9*64+32,y:22*64+32,hp:9,mhp:9,dmg:3,spd:1.4,sz:17,ar:25,color:'#909497',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:22*64+32,y:24*64+32,hp:9,mhp:9,dmg:3,spd:1.5,sz:17,ar:25,color:'#909497',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:36*64+32,y:22*64+32,hp:9,mhp:9,dmg:3,spd:1.5,sz:17,ar:25,color:'#909497',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'slime',x:15*64+32,y:30*64+32,hp:9,mhp:9,dmg:3,spd:1.2,sz:18,ar:24,color:'#d5dbdb',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // brine slime
+      {type:'slime',x:30*64+32,y:30*64+32,hp:9,mhp:9,dmg:3,spd:1.2,sz:18,ar:24,color:'#d5dbdb',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      // The deep galleries — the night shift never clocked out
+      {type:'skeleton',x:12*64+32,y:40*64+32,hp:10,mhp:10,dmg:4,spd:1.5,sz:18,ar:26,color:'#717d7e',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:32*64+32,y:42*64+32,hp:10,mhp:10,dmg:4,spd:1.5,sz:18,ar:26,color:'#717d7e',hf:0,ac:0,af:0,at_:0,_dungeon:true},
+      {type:'skeleton',x:22*64+32,y:48*64+32,hp:13,mhp:13,dmg:4,spd:1.6,sz:20,ar:28,color:'#515a5a',hf:0,ac:0,af:0,at_:0,_dungeon:true}, // the foreman
+    ],
+    buildWorld(){
+      const DCOLS=46, DROWS=54;
+      const g=[];
+      for(let r=0;r<DROWS;r++){ g.push([]); for(let c=0;c<DCOLS;c++) g[r].push(2); }
+      function rect(r1,c1,r2,c2,t){ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=t; }
+      function room(r1,c1,r2,c2){ rect(r1,c1,r2,c2,1); }
+      function salt(r1,c1,r2,c2){ rect(r1,c1,r2,c2,10); } // salt-crystal beds
+      function rail(r1,c,r2){ for(let r=r1;r<=r2;r++) if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=8; } // vertical cart rail
+      function hrail(r,c1,c2){ for(let c=c1;c<=c2;c++) if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=8; }
+      function t(r,c,tile){ if(r>=0&&r<DROWS&&c>=0&&c<DCOLS) g[r][c]=tile; }
+      function pillar(r,c){ t(r,c,2); }
+
+      // ── HEAD FRAME (rows 0-13) — the entry shaft ──
+      room(0,20,2,25);
+      t(1,22,9); t(1,23,9); // exit stairs
+
+      // Entry hall — dwarven proportion, pillar rows
+      room(3,8,13,37);
+      for(let c=11;c<=34;c+=6){ pillar(6,c); pillar(10,c); }
+      t(4,22,7); t(4,23,7); // tally board: shifts, names, dates — stops mid-column
+      t(12,9,6); t(12,36,6); // stores chests
+      // Main rail runs straight down the spine — dwarves don't wander
+      rail(13,22,17); rail(13,23,17);
+
+      // ── CRYSTAL HALLS (rows 14-33) ──
+      // West hall — salt beds
+      room(18,4,32,18);
+      salt(20,6,25,12);
+      salt(27,8,31,16);
+      pillar(22,15);pillar(26,15);pillar(22,5);
+      t(19,5,7); // cutting notes
+      t(31,5,6); // chest half-buried in salt
+      // East hall — the vein
+      room(18,27,32,42);
+      salt(20,31,26,40);
+      pillar(22,29);pillar(26,29);pillar(22,41);
+      t(19,41,7); // assay marks
+      t(31,41,6); // chest
+      // Center junction + rails branching
+      room(18,19,26,26);
+      hrail(21,8,37);   // cross rail west-east through both halls
+      rail(26,22,35); rail(26,23,35); // spine continues
+      t(25,20,7); // junction post: DOWN — with an arrow, then a second arrow scratched over it pointing UP
+
+      // Brine sump — careful footing
+      room(27,19,33,26);
+      rect(29,20,32,25,3); // brine pool
+
+      // ── THE DEEP GALLERIES (rows 34-53) ──
+      room(36,6,44,39);
+      for(let c=9;c<=36;c+=5){ pillar(38,c); pillar(42,c); }
+      t(37,7,6); // abandoned kit chest
+      t(37,38,7); // last entry in the shift ledger
+      salt(40,14,43,31); // the deep bed — untouched since
+      rail(44,22,46); rail(44,23,46);
+
+      // THE SEALED GALLERY — dwarven seal-work, left visible but shut
+      // (a walled ring with a single readable seal-stone; it does NOT open)
+      room(46,32,52,42);
+      room(49,29,50,31); // approach corridor from the foreman's chamber
+      [[48,35],[48,39],[50,35],[50,39]].forEach(([r,c])=>pillar(r,c));
+      t(49,37,7); // THE DWARVEN SEAL — inscription: what Brokk's father shut away
+      t(51,41,6); // offering chest left at the seal
+
+      // Foreman's chamber — the third seal
+      room(46,14,52,28);
+      t(47,16,7); t(47,26,7); // foreman's ledgers
+      pillar(49,17);pillar(49,25);
+      // THE SEAL CHEST
+      t(51,21,6); // → key_drowned + revelation
+      // Shortcut out — ore lift shaft west
+      room(47,2,51,8);
+      room(48,9,49,13); // lift approach from the foreman's chamber
+      t(48,4,9); t(49,4,9);
+      return g;
+    }
+  },
   frost_vaults:{ name:'The Frost Vaults', subtitle:'Sealed and Cold', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
   shattered_keep:{ name:'The Shattered Keep', subtitle:'The Long Silence Ends', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
   keep_east_wing:{ name:'The East Wing', subtitle:'The Vaen Breach', cols:0, rows:0, spawnX:0, spawnY:0, buildWorld(){return[];} },
@@ -5326,7 +5779,8 @@ function innChestEvent(r, c){
 
 function dungeonChestEvent(r, c){
   if(!DUNGEON) return;
-  // Catacombs progression key — exit shortcut chest at row46,col1
+  // ── CATACOMBS ──
+  // Progression key — exit shortcut chest at row46,col1
   if(DUNGEON==='catacombs' && r===47 && c===1){
     giveProgressionKey('catacombs');
   }
@@ -5342,6 +5796,86 @@ function dungeonChestEvent(r, c){
         showBuyFlash('The name. Your name. Carved here.');
       }
     }, 800);
+  }
+
+  // ── ROOTVAULT ──
+  // The seal chest — heart chamber
+  if(DUNGEON==='rootvault' && r===49 && c===20){
+    giveProgressionKey('rootvault');
+    setTimeout(()=>{
+      showQuestNotif({
+        title:'The Land Agreed',
+        hint:'Grown into the heartwood, unmistakable: the seal on the keep was not an attack. It was asked for. The land was one of the four that answered.'
+      });
+      changeApproval('coren', +10);
+    }, 1400);
+  }
+  // The old seeker's pack — his warning
+  if(DUNGEON==='rootvault' && r===28 && c===14){
+    setTimeout(()=>{
+      showQuestNotif({
+        title:"A Seeker's Pack",
+        hint:'A journal, root-stained but legible: "The vault is not keeping us out. It is keeping count. Four of us went down. It let four of us matter."'
+      });
+    }, 800);
+  }
+
+  // ── SALTMINE ──
+  // The seal chest — foreman's chamber
+  if(DUNGEON==='saltmine' && r===51 && c===21){
+    giveProgressionKey('saltmine');
+    setTimeout(()=>{
+      showQuestNotif({
+        title:"The Foreman's Last Ledger",
+        hint:'"We cut too close to the east wing. The resonance came through forty fathoms of stone. Sealed gallery nine ourselves. The keep-folk asked; we answered. — Ironfoot, foreman."'
+      });
+      changeApproval('torvin', +10);
+    }, 1400);
+  }
+  // The dwarven seal offering chest
+  if(DUNGEON==='saltmine' && r===51 && c===41){
+    setTimeout(()=>{
+      showQuestNotif({
+        title:'The Dwarven Seal',
+        hint:'The seal-stone on gallery nine is dwarven work, still holding. Brokk should know his father kept the line. The Frost Key — wherever it is — opens the western vaults, not this.'
+      });
+    }, 800);
+  }
+
+  // ── DROWNED ARCHIVE ──
+  // The Vaen research — the second egg
+  if(DUNGEON==='drowned_archive' && r===45 && c===34){
+    setTimeout(()=>{
+      showQuestNotif({
+        title:'The Vaen Research',
+        hint:'Preserved cold and dry: the Vaen field notes. There were TWO eggs. One left the keep with the youngest child. One stayed in the east wing — and it is what has been resonating for thirty years.'
+      });
+      changeApproval('coren', +15);
+      if(_HERO&&_HERO.id==='coren'){
+        showBuyFlash('Two. There were always two.');
+      } else {
+        setTimeout(()=>showBuyFlash('Coren has gone very still.'), 1800);
+      }
+    }, 800);
+  }
+  // The shipping manifest — island desk (readable chest stand-in via nearby cargo chests)
+  if(DUNGEON==='drowned_archive' && ((r===26&&c===12)||(r===27&&c===30))){
+    setTimeout(()=>{
+      showQuestNotif({
+        title:'Waterlogged Cargo',
+        hint:'Crates stamped with the keep\'s mark, carried down the flooded stair the night the ship went down. Someone was moving the archive INTO the water. Cold preservation — deliberate.'
+      });
+    }, 800);
+  }
+  // THE SEAL CHEST — Keep Master Key
+  if(DUNGEON==='drowned_archive' && r===49 && c===21){
+    giveProgressionKey('drowned_archive');
+    setTimeout(()=>{
+      showQuestNotif({
+        title:'The Fourth Seal',
+        hint:'The head archivist\'s hand, final page: "Four anchors hold the door — the dead, the land, the deep, and the cold. If all four release it, whoever opens the keep does so knowing." You know.'
+      });
+    }, 1400);
   }
 }
 
@@ -6047,8 +6581,8 @@ const KEY_ITEMS = {
   key_catacombs:  { id:'key_catacombs',  name:'Tarnished Key',    icon:'🗝️', desc:'Found in the inn. Opens the catacombs beneath the chapel.' },
   key_rootvault:  { id:'key_rootvault',  name:'Root-Bound Key',   icon:'🗝️', desc:'Found in the catacombs. The wood grain matches the vault door.' },
   key_saltmine:   { id:'key_saltmine',   name:'Dwarven Salt Key',  icon:'🗝️', desc:'Found in the Rootvault. Heavy, crystalline handle.' },
-  key_frost:      { id:'key_frost',      name:'Frost Key',         icon:'🗝️', desc:'Found in the Saltmine. Ice-cold to the touch.' },
-  key_drowned:    { id:'key_drowned',    name:'Waterlogged Key',   icon:'🗝️', desc:'Found in the Frost Vaults. Smells of the deep.' },
+  key_frost:      { id:'key_frost',      name:'Frost Key',         icon:'🗝️', desc:'Found in the Drowned Archive. Ice-cold to the touch. Opens the dwarven seal in the west.' },
+  key_drowned:    { id:'key_drowned',    name:'Waterlogged Key',   icon:'🗝️', desc:'Found in the Saltmine. Smells of the deep coast.' },
   key_keep:       { id:'key_keep',       name:'Keep Master Key',   icon:'🗝️', desc:'Found in the Drowned Archive. This opens the keep.' },
   key_skeleton:   { id:'key_skeleton',   name:'Skeleton Key',      icon:'🗝️', desc:'Opens almost anything. Almost.' },
 };
@@ -6115,12 +6649,12 @@ function tryUnlockDoor(r, c){
 }
 
 // Give a key when a dungeon final chest is opened
+// Chain runs the four corners: catacombs → rootvault → saltmine → drowned → keep
 function giveProgressionKey(fromDungeon){
   const nextKey = {
-    catacombs:     'key_rootvault',
-    rootvault:     'key_saltmine',
-    saltmine:      'key_frost',
-    frost_vaults:  'key_drowned',
+    catacombs:      'key_rootvault',
+    rootvault:      'key_saltmine',
+    saltmine:       'key_drowned',
     drowned_archive:'key_keep',
   }[fromDungeon];
   if(!nextKey) return;
@@ -6128,11 +6662,22 @@ function giveProgressionKey(fromDungeon){
   const item = KEY_ITEMS[nextKey];
   showBuyFlash('Found: '+(item?item.icon+' '+item.name:'a key'));
   showQuestNotif({title: item?item.name:'Key Found', hint: item?item.desc:'A key to the next dungeon.'});
+  // The Drowned Archive also yields the frost key — the dwarves' sealed deep is optional
+  if(fromDungeon==='drowned_archive' && !(INVENTORY['key_frost']>0)){
+    INVENTORY['key_frost'] = 1;
+    setTimeout(()=>showBuyFlash('Also found: 🗝️ Frost Key — Brokk might want to hear about this.'), 1600);
+  }
+  advanceFourSeals(fromDungeon);
 }
 
 function openDlg(npcId){
   const char = CHARACTERS.find(c=>c.id===npcId);
-  if(!char) return;
+  if(!char){
+    // Not a party member — world NPC? Route to the world dialogue engine.
+    const npc = GS.npcs.find(n=>n.id===npcId && n._worldNPC);
+    if(npc && WORLD_DLG[npc.dlg]){ openWorldDlg(npc); }
+    return;
+  }
   const dlgData = DIALOGUES[npcId];
   if(!dlgData) return;
 
@@ -6470,6 +7015,110 @@ function closeDlg(){
     GS.lt = performance.now();
     GS.raf = requestAnimationFrame(loop);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WORLD DIALOGUE ENGINE
+// Drives WORLD_DLG conversations — villagers, hermits, dwarves,
+// soldiers, shopkeepers. Node shape: {text, subtext, choices:[
+// {text, reply, subtext, back:'node', exit:true, trade:'shopId',
+//  delta_<partyId>:±n}]}
+// ═══════════════════════════════════════════════════════════════
+const _worldDlgState = {}; // npcId -> {greeted, used:{}}
+
+function openWorldDlg(npc){
+  const data = WORLD_DLG[npc.dlg];
+  if(!data) return;
+  dlgOpen = true;
+  dlgNPC = npc.id;
+  GS.paused = true;
+
+  const box = document.getElementById('dialogue-box');
+  box.style.setProperty('--dclr', data.color||'#888');
+  box.classList.add('on');
+  box.onclick = dlgTap;
+  document.getElementById('dlg-portrait').textContent = npc.icon||'?';
+  document.getElementById('dlg-name-tab').textContent = (npc.name||'???').toUpperCase();
+  document.getElementById('dlg-name-tab').style.color = data.color||'#888';
+  document.getElementById('dlg-portrait').style.setProperty('--dclr', data.color||'#888');
+
+  if(!_worldDlgState[npc.id]) _worldDlgState[npc.id] = {greeted:false, used:{}};
+  const st = _worldDlgState[npc.id];
+  const startNode = (!st.greeted && data.greeting) ? 'greeting' : (data.investigate ? 'investigate' : 'greeting');
+  st.greeted = true;
+  showWorldNode(data, startNode, npc);
+}
+
+function showWorldNode(data, nodeKey, npc){
+  const node = data[nodeKey];
+  if(!node){ closeDlg(); return; }
+  const st = _worldDlgState[npc.id];
+  const textEl = document.getElementById('dlg-text');
+  const choicesEl = document.getElementById('dlg-choices');
+  choicesEl.innerHTML = '';
+
+  let display = node.text || '';
+  if(node.subtext) display += `<br><span class="dlg-sub">${node.subtext}</span>`;
+
+  typeDialogue(display, textEl, ()=>{
+    const choices = node.choices || [];
+    let shown = 0;
+    choices.forEach((ch, i)=>{
+      const key = nodeKey+'_'+i;
+      // Exhaust asked questions (keep exit/trade/heal always available)
+      if(ch.back && st.used[key] && !ch.exit && !ch.trade && !ch.heal) return;
+      const btn = document.createElement('button');
+      btn.className = 'dlg-choice' + (ch.exit ? ' dlg-choice-fwd' : '');
+      btn.textContent = ch.text;
+      btn.onclick = ()=>handleWorldChoice(ch, data, nodeKey, i, npc);
+      choicesEl.appendChild(btn);
+      shown++;
+    });
+    // Everything asked — always leave a way out
+    if(shown===0){
+      const btn = document.createElement('button');
+      btn.className = 'dlg-choice dlg-choice-fwd';
+      btn.textContent = '[Leave]';
+      btn.onclick = ()=>closeDlg();
+      choicesEl.appendChild(btn);
+    }
+  });
+}
+
+function handleWorldChoice(ch, data, nodeKey, i, npc){
+  const st = _worldDlgState[npc.id];
+  const choicesEl = document.getElementById('dlg-choices');
+  const textEl = document.getElementById('dlg-text');
+  choicesEl.innerHTML = '';
+
+  // Party approval deltas — delta_coren:+8 etc.
+  Object.keys(ch).forEach(k=>{
+    if(k.indexOf('delta_')===0 && typeof ch[k]==='number'){
+      changeApproval(k.slice(6), ch[k]);
+    }
+  });
+
+  // A healer's hands — restore the hero
+  if(ch.heal && GS.p){
+    GS.p.hp = GS.p.mhp;
+    updateHUD();
+    burst(GS.p.x, GS.p.y, '#e74c3c', 10);
+  }
+
+  if(ch.exit){ closeDlg(); return; }
+  if(ch.trade){ closeDlg(); setTimeout(()=>openShop(ch.trade), 120); return; }
+
+  if(ch.back){
+    st.used[nodeKey+'_'+i] = true;
+    let replyText = ch.reply || '';
+    if(ch.subtext) replyText += `<br><span class="dlg-sub">${ch.subtext}</span>`;
+    typeDialogue(replyText, textEl, ()=>{
+      showWorldNode(data, ch.back, npc);
+    });
+    return;
+  }
+  if(ch.goto){ showWorldNode(data, ch.goto, npc); return; }
+  closeDlg();
 }
 
 // ── WEAPON SYSTEM ──
@@ -7249,6 +7898,42 @@ function safeEnemyPush(e,dx,dy){
 
 // ── QUEST SYSTEM ──
 const QUESTS = {
+  four_seals: {
+    id:'four_seals', title:'The Four Seals', giver:'party',
+    status:'active',
+    description:"The Shattered Keep wasn't locked — it was sealed, from inside, and the seal is anchored in four old places at the corners of the valley. Places older than the keep itself. Whatever closed that door wove its working through all four.",
+    hint:"Begin beneath the chapel in the southwest bonefields. The innkeeper left a key somewhere in the inn.",
+  },
+  seal_catacombs: {
+    id:'seal_catacombs', title:'The Names Below', giver:'party',
+    status:'hidden',
+    description:"The catacombs run beneath the collapsed chapel. The gravedigger went down twice and won't go again. He says the names on the gravestones are written a second time — on the walls inside.",
+    hint:"Descend through the chapel floor, southwest, in the bonefields. Find the name chamber.",
+  },
+  seal_rootvault: {
+    id:'seal_rootvault', title:'What the Land Remembers', giver:'party',
+    status:'hidden',
+    description:"Elder Moss tends 'memory' in the hermit woods. The Rootvault is older than the keep, older than the road — something grows down there that remembers what the land was before anyone built on it.",
+    hint:"Northwest, past the hermit huts. The root-bound key from the catacombs opens the vault gate.",
+  },
+  seal_saltmine: {
+    id:'seal_saltmine', title:'The Dwarven Deep', giver:'party',
+    status:'hidden',
+    description:"Brokk Ironfoot's people cut the saltmine long before the keep closed — and then sealed their own lowest gallery. Dagni says whatever his father shut away down there is still alive.",
+    hint:"Southeast, beneath the farm cellar. The crystalline key from the Rootvault fits the mine gate.",
+  },
+  seal_drowned: {
+    id:'seal_drowned', title:'Cold Preservation', giver:'party',
+    status:'hidden',
+    description:"Thirty years ago a cargo ship went down off the northeast coast — the same night the keep closed. The sailors won't say what it carried. The Drowned Archive kept the keep's records. It may have kept its secrets, too.",
+    hint:"Northeast coast, past Greyport. The waterlogged key from the Saltmine opens the archive.",
+  },
+  open_the_keep: {
+    id:'open_the_keep', title:'The Long Silence Ends', giver:'party',
+    status:'hidden',
+    description:"Four seals. Four chambers. Every anchor traced back to one door. The Keep Master Key is heavier than it should be.",
+    hint:"South, down the Duskroad. The keep gate waits.",
+  },
   resonance_window: {
     id:'resonance_window', title:'The Resonance Window', giver:'coren',
     status:'hidden', daysRemaining:4,
@@ -7260,9 +7945,25 @@ const QUESTS = {
     id:'shattered_keep', title:'Chronicles of the Shattered Keep', giver:'party',
     status:'active',
     description:"The keep has been sealed for longer than anyone can account for. Four seekers. One door.",
-    hint:"Enter the keep via the dungeon stairwell south of the inn.",
+    hint:"Recover the four seals. Then the stairwell south of the inn.",
   },
 };
+
+// Master-quest hint advances as seals fall
+function advanceFourSeals(afterDungeon){
+  const next = {
+    catacombs:      {q:'seal_rootvault',  hint:'One seal broken. Northwest — the Rootvault gate, past the hermit woods.'},
+    rootvault:      {q:'seal_saltmine',   hint:'Two seals broken. Southeast — the mine gate beneath the farm cellar.'},
+    saltmine:       {q:'seal_drowned',    hint:'Three seals broken. Northeast — the Drowned Archive on the far coast.'},
+    drowned_archive:{q:'open_the_keep',   hint:'All four seals are broken. South. The keep is waiting.'},
+  }[afterDungeon];
+  if(!next) return;
+  const sealQ = {catacombs:'seal_catacombs',rootvault:'seal_rootvault',saltmine:'seal_saltmine',drowned_archive:'seal_drowned'}[afterDungeon];
+  if(sealQ) completeQuest(sealQ);
+  QUESTS.four_seals.hint = next.hint;
+  setTimeout(()=>activateQuest(next.q), 2200);
+  if(afterDungeon==='drowned_archive'){ QUESTS.four_seals.status='complete'; }
+}
 
 function activateQuest(id){
   if(!QUESTS[id]) return;
@@ -8084,7 +8785,7 @@ function mobileAction(){
   }
   // NPC or shop
   if(nearNPC&&!dlgOpen){ openDlg(nearNPC.id); return; }
-  if(window._nearShop&&!activeShop){ openShop(window._nearShop); return; }
+  if(window._nearShop&&!dlgOpen&&!activeShop){ shopkeeperTalk(window._nearShop); return; }
   // Otherwise attack
   atk();
 }
@@ -8161,16 +8862,24 @@ function checkShopProximity(){
   const nearHarwicks=Math.hypot(p.x-HARWICKS_POS.x,p.y-HARWICKS_POS.y)<SHOP_RANGE;
   const prompt=document.getElementById('interact-prompt');
   if(nearGreypost){
-    prompt.textContent='E · ENTER THE GREYPOST';
+    prompt.textContent = _worldDlgState['maret'] ? 'E · TALK TO MARET · THE GREYPOST' : 'E · MEET MARET · THE GREYPOST';
     prompt.classList.add('on');
     window._nearShop='greypost';
   } else if(nearHarwicks){
-    prompt.textContent="E · ENTER HARWICK'S IRON";
+    prompt.textContent = _worldDlgState['harwick'] ? "E · TALK TO HARWICK · HARWICK'S IRON" : "E · MEET HARWICK · HARWICK'S IRON";
     prompt.classList.add('on');
     window._nearShop='harwicks';
   } else {
     window._nearShop=null;
   }
+}
+
+// Talking to the shopkeeper is the way into the shop —
+// they're people first, counters second.
+function shopkeeperTalk(shopId){
+  const npc = (GS.shopNPCs||[]).find(n=>n.shop===shopId);
+  if(!npc || !WORLD_DLG[npc.id]){ openShop(shopId); return; } // fallback
+  openWorldDlg({id:npc.id, dlg:npc.id, icon:npc.icon, name:npc.name});
 }
 
 // ── QUEST TRIGGERS ──
@@ -8414,7 +9123,13 @@ function tryNPCTap(clientX, clientY){
   });
   if(!hit) return false;
 
-  // Open quick swap for this NPC
+  // World NPC — tap to talk
+  if(hit._worldNPC){
+    if(!dlgOpen) openDlg(hit.id);
+    return true;
+  }
+
+  // Party member — open quick gear swap
   openNPCSwap(hit.id);
   return true;
 }

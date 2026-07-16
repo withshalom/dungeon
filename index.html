@@ -141,10 +141,11 @@ body::after {
 /* MOBILE CONTROLS — portrait bottom */
 /* ── MOBILE CONTROLS ── */
 #mctl {
-  position:fixed; display:block; pointer-events:none; z-index:60;
+  position:fixed; display:none; pointer-events:none; z-index:60;
   inset:0;
-  /* container is always visible — D-pad and buttons control their own opacity */
+  /* hidden until gameplay — .on is toggled by showMctl()/hideMctl() */
 }
+#mctl.on { display:block; }
 /* D-PAD fades — opacity managed by #dpad-wrap.show */
 #dpad-wrap {
   opacity:0; transition:opacity .6s;
@@ -2826,14 +2827,7 @@ function atk(){
   p.lastAtkType=type;
 }
 
-function skill(){
-  const p=GS.p;if(!p||p.abt>0)return;p.abt=120;
-  if(p.id==='torvin'){GS.enemies.forEach(e=>{const d=Math.hypot(e.x-p.x,e.y-p.y)||1;safeEnemyPush(e,(e.x-p.x)/d*64,(e.y-p.y)/d*64);hitE(e,1);});burst(p.x,p.y,p.color,14);}
-  else if(p.id==='aeryn'){const _f=p.facing; const _s=.707;
-    const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_s,-_s],5:[_s,_s],6:[-_s,_s],7:[-_s,-_s]}[_f]||[0,-1];safeTeleport(p,d[0]*TS*2.5,d[1]*TS*2.5,10);burst(p.x,p.y,'#2ecc71',10);}
-  else if(p.id==='roland'){p.hp=Math.min(p.maxHp,p.hp+1);burst(p.x,p.y,'#e67e22',12);}
-  else if(p.id==='coren'){GS.enemies.forEach(e=>{if(Math.hypot(e.x-p.x,e.y-p.y)<TS*3.5)hitE(e,2);});burst(p.x,p.y,'#9b59b6',20);}
-}
+/* skill (legacy stub) — legacy duplicate removed in Four Seals integration pass */
 
 function burst(x,y,color,n){
   for(let i=0;i<n;i++){
@@ -2947,22 +2941,26 @@ function render(){
     ctx.save();
 
     if(pr.kind==='arrow'){
-      // Arrow — thin line in direction of travel
+      // Arrow — real fletched shaft + broadhead, ported from the demo's drawArrow
       const ang=pr.angle||0;
-      const len=pr.sz*3.5;
-      ctx.strokeStyle=pr.color;
-      ctx.lineWidth=2.5;
+      ctx.translate(px,py);
+      ctx.rotate(ang);
       ctx.shadowColor=pr.color;
-      ctx.shadowBlur=4;
-      ctx.lineCap='round';
-      ctx.beginPath();
-      ctx.moveTo(px-Math.cos(ang)*len, py-Math.sin(ang)*len);
-      ctx.lineTo(px+Math.cos(ang)*4,   py+Math.sin(ang)*4);
-      ctx.stroke();
-      // Arrowhead
+      ctx.shadowBlur=3;
+      // Shaft
+      ctx.fillStyle='#8a5a2c';
+      ctx.fillRect(-11,-1,15,2);
+      // Fletching (rear vanes)
       ctx.fillStyle=pr.color;
+      ctx.fillRect(-12,-2.5,5,2);
+      ctx.fillRect(-12,0.5,5,2);
+      // Broadhead (tip)
+      ctx.fillStyle='#d8d8d0';
       ctx.beginPath();
-      ctx.arc(px+Math.cos(ang)*4, py+Math.sin(ang)*4, 3, 0, Math.PI*2);
+      ctx.moveTo(4,-2.5);
+      ctx.lineTo(9,0);
+      ctx.lineTo(4,2.5);
+      ctx.closePath();
       ctx.fill();
 
     } else if(pr.kind==='staff_bolt'){
@@ -7193,32 +7191,7 @@ const STUNNED = new Map(); // enemy -> frames remaining
 function isStunned(e){ return (STUNNED.get(e)||0) > 0; }
 
 // ── COMBAT OVERHAUL ──
-function atk(){
-  const p = GS.p;
-  if(!p || p.atk) return;
-  p.atk = true; p.atkT = 14;
-  const angs = {0:-Math.PI/2,1:0,2:Math.PI/2,3:Math.PI};
-  p.atkA = angs[p.facing];
-  const type = getAttackType(p);
-
-  if(type==='bow'){
-    // Ranged arrow
-    const _as=.707;const d={0:[0,-1],1:[1,0],2:[0,1],3:[-1,0],4:[_as,-_as],5:[_as,_as],6:[-_as,_as],7:[-_as,-_as]}[p.facing]||[0,-1];
-    GS.projectiles.push({
-      x:p.x,y:p.y,vx:d[0]*7,vy:d[1]*7,
-      dmg:p.dmg,color:'#c8a040',sz:4,life:80,
-      trail:true,type:'arrow'
-    });
-    if(p.atkA!==undefined) spawnArrowParticles(p.x,p.y,p.atkA);
-  } else if(type==='dagger'||type==='sword'||type==='axe'||type==='staff'){
-    // Melee sweep
-    GS.enemies.forEach(e=>{
-      if(!isStunned(e) && Math.hypot(e.x-p.x,e.y-p.y)<p.rng) hitE(e,p.dmg);
-    });
-    burst(p.x,p.y,p.color,4);
-  }
-  p.lastAtkType = type;
-}
+/* atk (legacy — orb projectiles) — legacy duplicate removed in Four Seals integration pass */
 
 function skill(){
   const p = GS.p;
@@ -8303,16 +8276,7 @@ function unequipSlot(charId,slotKey){
   renderMenuContent('inventory');
 }
 
-function useConsumable(itemId){
-  if(!INVENTORY[itemId]||INVENTORY[itemId]<=0) return;
-  if(!GS.p) return;
-  INVENTORY[itemId]--;
-  if(itemId==='potion_1') GS.p.hp=Math.min(GS.p.maxHp,GS.p.hp+2);
-  else if(itemId==='potion_2') GS.p.hp=GS.p.maxHp;
-  const item=CATALOGUE[itemId];
-  if(item) showBuyFlash(item.name+' used');
-  updateHUD(); renderMenuContent('inventory');
-}
+/* useConsumable (older) — legacy duplicate removed in Four Seals integration pass */
 
 function getCharSlots(charId){
   const loadout = LOADOUT[charId];
@@ -8344,11 +8308,10 @@ function getSlotCandidates(charId, slotKey){
   return Object.values(CATALOGUE).filter(item=>{
     if(item.slot==='spell'){if(item.who!==charId&&item.who!=='any')return false;return true;}
     if(item.who!==charId&&item.who!=='any') return false;
-    // Match slot
+    // Match slot — live model: 'primary' / 'secondary' (+ spell keys, handled above)
     if(charId==='torvin'){
-      if(slotKey==='axe')    return item.slot==='axe'||item.slot==='main';
-      if(slotKey==='sword')  return item.slot==='sword';
-      if(slotKey==='shield') return item.slot==='shield'||item.slot==='offhand';
+      if(slotKey==='primary')   return item.slot==='primary';
+      if(slotKey==='secondary') return item.slot==='secondary';
     }
     if(charId==='aeryn'){
       if(slotKey==='primary')   return item.slot==='primary'&&item.who==='aeryn';
@@ -8359,65 +8322,18 @@ function getSlotCandidates(charId, slotKey){
       if(slotKey==='secondary') return item.slot==='secondary';
     }
     if(charId==='coren'){
-      if(slotKey==='staff')      return item.type==='staff';
-      if(slotKey==='wands_r'||slotKey==='wands_l') return item.type==='wands';
-      if(slotKey==='offhand')    return item.slot==='offhand';
-      if(slotKey==='staffSpell') return item.slot==='spell'&&(item.delivery==='staff'||item.delivery==='both');
-      if(slotKey==='wandSpell_r'||slotKey==='wandSpell_l') return item.slot==='spell'&&(item.delivery==='wands'||item.delivery==='both');
+      if(slotKey==='primary')   return item.slot==='primary';
+      if(slotKey==='secondary') return item.slot==='secondary';
     }
     return false;
   }).sort((a,b)=>a.tier-b.tier);
 }
 
-function switchInventoryChar(id){
-  const el=document.getElementById('menu-content');
-  if(el){el._selChar=id;renderMenuContent('inventory');}
-}
+/* switchInventoryChar — exact duplicate removed */
 
-function openSlotPicker(charId, slotKey){
-  const el = document.getElementById('menu-content');
-  const key = charId+'_'+slotKey;
-  el._openSlot = el._openSlot===key ? null : key;
-  renderMenuContent('inventory');
-}
+/* openSlotPicker (copy) — legacy duplicate removed in Four Seals integration pass */
 
-function equipItem(charId, slotKey, itemId){
-  const isSpell = CATALOGUE[itemId] && CATALOGUE[itemId].slot==='spell';
-  if(isSpell && !PARTY.knownSpells.includes(itemId)) return;
-  if(!isSpell && !ECONOMY.owned[itemId]) return;
-
-  // Two-handed rule: equipping axe clears sword+shield from active use
-  // equipping sword clears axe from active use
-  if(charId==='torvin'){
-    if(slotKey==='axe'){
-      LOADOUT.torvin.primary=itemId;
-      // Axe is two-handed — deactivate sword+shield
-      ACTIVE_WEAPON.torvin='axe';
-    } else if(slotKey==='sword'){
-      LOADOUT.torvin.primary=itemId;
-      // Sword is one-handed — deactivate axe
-      if(ACTIVE_WEAPON.torvin==='axe') ACTIVE_WEAPON.torvin='sword';
-    } else if(slotKey==='shield'){
-      // Shield only pairs with sword
-      if(LOADOUT.torvin.primary) LOADOUT.torvin.secondary=itemId;
-    } else {
-      LOADOUT[charId][slotKey]=itemId;
-    }
-  } else {
-    LOADOUT[charId][slotKey]=itemId;
-  }
-  // Update player stats if equipping for active hero
-  if(_HERO && _HERO.id===charId && GS.p){
-    const item = CATALOGUE[itemId];
-    if(item && item.dmg) GS.p.dmg = item.dmg;
-  }
-  // Close picker
-  const el = document.getElementById('menu-content');
-  el._openSlot = null;
-  updateWeaponBtn();
-  updateActionBtn();
-  renderMenuContent('inventory');
-}
+/* equipItem (legacy slot model) — legacy duplicate removed in Four Seals integration pass */
 
 function useConsumable(itemId){
   if(!INVENTORY[itemId]||INVENTORY[itemId]<=0) return;
@@ -8541,6 +8457,8 @@ function mA(t){if(t==='atk')atk();else skill();}
 
 // Mobile controls auto-fade
 function showMctl(){
+  const mc=document.getElementById('mctl');
+  if(mc) mc.classList.add('on');
   const dp=document.getElementById('dpad-wrap');
   if(!dp) return;
   dp.classList.add('show');
@@ -8551,6 +8469,8 @@ function showMctl(){
   }
 }
 function hideMctl(){
+  const mc=document.getElementById('mctl');
+  if(mc) mc.classList.remove('on');
   const dp=document.getElementById('dpad-wrap');
   if(!dp) return;
   clearTimeout(window._mctlT);
@@ -8790,26 +8710,9 @@ function mobileAction(){
   atk();
 }
 
-function updateToolSlot(){
-  const toolBtn=document.getElementById('btn-menu');
-  const iconEl=document.getElementById('hud-menu-icon');
-  const lblEl=document.getElementById('btn-menu-lbl');
-  if(!toolBtn||!iconEl||!_HERO) return;
-  const isStoryteller=_HERO&&_HERO.id==='roland'&&_SUB&&_SUB.id==='storyweaver';
-  if(isStoryteller){
-    toolBtn.style.display='flex';
-    toolBtn.style.borderColor='rgba(200,134,10,.6)';
-    iconEl.textContent='🗺️';
-    if(lblEl) lblEl.textContent='MAP';
-  } else {
-    toolBtn.style.display='flex';
-    toolBtn.style.borderColor='rgba(100,100,100,.3)';
-    iconEl.textContent='⚔️';
-    if(lblEl) lblEl.textContent='INV';
-  }
-}
+/* updateToolSlot (legacy) — legacy duplicate removed in Four Seals integration pass */
 
-function hudToolAction(){ openMenuScreen(); }
+/* hudToolAction — exact duplicate removed */
 
 // ── SHOP PROXIMITY ──
 
@@ -8892,26 +8795,10 @@ function checkQuestTriggers(){
 }
 
 // ── PAUSE / GAME OVER ──
-function togglePause(){
-  GS.paused=!GS.paused;
-  document.getElementById('pause').classList.toggle('on',GS.paused);
-}
-function gameOver(){
-  GS.running=false;
-  setTimeout(()=>{if(confirm('Your hero has fallen.\n\nReturn to title?'))goTitle();},500);
-}
-function goTitle(){
-  GS.running=false;GS.paused=false;
-  if(GS.raf)cancelAnimationFrame(GS.raf);
-  document.getElementById('hud').classList.remove('on');
-  document.getElementById('pause').classList.remove('on');
-  showScreen('title');
-}
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  if(id!=='game') hideMctl();
-}
+/* togglePause — exact duplicate removed */
+/* gameOver — exact duplicate removed */
+/* goTitle — exact duplicate removed */
+/* showScreen (uncommented copy) — legacy duplicate removed in Four Seals integration pass */
 
 // ── SWIPE ──
 let swipeStart=null;
